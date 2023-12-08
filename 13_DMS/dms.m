@@ -28,10 +28,10 @@ distractor = 4;
 % define time intervals (in ms):
 wait_for_fix = 20000;
 initial_fix = 500;
-sample_time = 600;%1000;% 200 Pooya
-delay = randi([300, 600]); %700; % random 200-500 ms --> saccade delay (monkey should  not predict time), super saccade
+sample_time = 500;%1000;% 200 Pooya
+delay = randi([250, 500]); %700; % random 200-500 ms --> saccade delay (monkey should  not predict time), super saccade
 max_reaction_time = 3000;
-hold_target_time = 500; % pooya 750 but not important, max for Arya
+hold_target_time = 800; % pooya 750 but not important, max for Arya
 
 % fixation window (in degrees):
 fix_radius = 1.9;%2;
@@ -197,16 +197,18 @@ errors = TrialRecord.TrialErrors;
 if 0==error_type
     idle(0);                 % Clear screens
 
-    if length(errors) >= 6 && errors(end) == 0 && errors(end-1) == 0 && errors(end-2) == 0 && errors(end-3) == 0 && errors(end-4) == 0 && errors(end-5) == 0 % last five trials
+    if length(errors) >= 3 && errors(end) == 0 && errors(end-1) == 0 && errors(end-2) == 0 %last three trials %length(errors) >= 6 && errors(end) == 0 && errors(end-1) == 0 && errors(end-2) == 0 && errors(end-3) == 0 && errors(end-4) == 0 && errors(end-5) == 0 % last five trials
         goodmonkey(75, 'juiceline',1, 'numreward',3, 'pausetime',200, 'eventmarker',50); % 100 ms of juice x 2
-    elseif length(errors) >= 3 && errors(end) == 0 && errors(end-1) == 0 && errors(end-2) == 0 % last three trials
+    elseif length(errors) >= 2 && errors(end) == 0 && errors(end-1) == 0 %last two trials  %length(errors) >= 3 && errors(end) == 0 && errors(end-1) == 0 && errors(end-2) == 0 % last three trials
         goodmonkey(75, 'juiceline',1, 'numreward',2, 'pausetime',200, 'eventmarker',50); % 100 ms of juice x 2
     else
         goodmonkey(75, 'juiceline',1, 'numreward',1, 'pausetime',200, 'eventmarker',50);
     end
      
 elseif 5 == error_type % choosing the distractor    || 6 == error_type || 7 == error_type 
-    idle(1600);               % Clear screens
+    idle(1100);               % Clear screens
+elseif 3 == error_type || 4 == error_type
+    idle(500)
 else
     idle(0)
 end
