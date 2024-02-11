@@ -1,6 +1,7 @@
 % if ~exist('eye_','var'), error('This demo requires eye signal input. Please set it up or try the simulation mode.'); end
 hotkey('x', 'escape_screen(); assignin(''caller'',''continue_'',false);');
 hotkey('r', 'goodmonkey(70, ''juiceline'', 1, ''eventmarker'', 100);');   % manual reward
+hotkey('q', 'escape_screen(); assignin(''caller'',''continue_'',false);');
 
 if exist('eye_','var'), tracker = eye_;
 elseif exist('eye2_','var'), tracker = eye2_;
