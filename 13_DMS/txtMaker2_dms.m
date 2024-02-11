@@ -6,7 +6,7 @@ data_rows = cell(10, length(header_row));
 fix = [0 0];
 rf = [-2 -2];
 pxperdeg = 36.039;
-img_size = [5 5]*pxperdeg;
+img_size = [6 6]*pxperdeg;
 loc_1 = [-6 0];
 loc_2 = [6 0];
 num_cond = 8;
@@ -46,7 +46,7 @@ end
 rows = [header_row; data_rows];
 
 % Write the rows to a text file
-filename = 'dms_younes2.txt';
+filename = 'dms_younes3.txt';
 fid = fopen(filename, 'wt');
 fprintf(fid, '%s\t', rows{1,1:end-1});
 fprintf(fid, '%s\n', rows{1,end});

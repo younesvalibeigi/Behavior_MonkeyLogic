@@ -13,10 +13,10 @@ fixation_point = 1;
 % Timing
 wait_time = 20000;
 fix_rad = 1.7;
-delay = 2000;
+delay = 200;
 reward = 60; % if reward = 30 & reward-duration = 20 then each reward transfer 0.0411 ml water
 reward_interval = 25;
-stim_time = 2000;
+stim_time = 1000;
 
 
 prbe_stim_matrix = [2 2 2 2 2]';
@@ -109,21 +109,31 @@ else
     if ~wth1.Success
         error_type = 1;
     else
-        goodmonkey(reward+3,'eventmarker',100);
-        run_scene(scene2,stim_eventmaker);
-        if ~wth2.Success 
-            error_type = 1; % Did not see two, only see one
+        %goodmonkey(reward+3,'eventmarker',100);
+        %error_type = 0;
+        run_scene(scene03, delay_eventmaker);
+        if ~wth1.Success
+            error_type = 2;
         else
             goodmonkey(reward+3,'eventmarker',100);
-            error_type = 2; % see for two seconds
-            run_scene(scene02, delay_eventmaker); % 1s delay
-            if ~wth02.Success
-                error_type = 2;
-            else
-                goodmonkey(reward+3,'eventmarker',100);
-                error_type = 0;
-            end
+            error_type = 0;
         end
+
+
+%         run_scene(scene2,stim_eventmaker);
+%         if ~wth2.Success 
+%             error_type = 1; % Did not see two, only see one
+%         else
+%             goodmonkey(reward+3,'eventmarker',100);
+%             error_type = 2; % see for two seconds
+%             run_scene(scene02, delay_eventmaker); % 1s delay
+%             if ~wth02.Success
+%                 error_type = 2;
+%             else
+%                 goodmonkey(reward+3,'eventmarker',100);
+%                 error_type = 0;
+%             end
+%         end
     end
 end
 % error 1, no fixation or only fixation and see for 1 s

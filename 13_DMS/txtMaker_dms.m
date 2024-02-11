@@ -4,30 +4,65 @@ header_row = {'Condition', 'Frequency', 'Block', 'Timing File', 'TaskObject#1', 
 % Define the data rows
 data_rows = cell(10, length(header_row));
 fix = [0 0];
-rf = [-1 -1];
+rf = [-0.1 -2.0];
 pxperdeg = 36.039;
 img_size = [5 5]*pxperdeg;
 loc_1 = [-6 0];
 loc_2 = [6 0];
-num_cond = 8;
+num_cond = 48;
 for i = 1:num_cond
     if floor(i/(num_cond/2+1)) == 0
         block = 1; 
     else
-        block = 2;
+        block = 1;
     end
-    data_row = {num2str(i), '1', num2str(block), 'dms', sprintf('fix(%.2f,%.2f)',fix(1), fix(2))};
+
+    if i<=4
+        level=0;
+    elseif i<=8
+        level=1;
+    elseif i<=12
+        level=2;
+    elseif i<=16
+        level=10;
+    elseif i<=20
+        level=14;
+    elseif i<=24
+        level=-1;
+    elseif i<=28
+        level=0;
+    elseif i<=32
+        level=1;
+    elseif i<=36
+        level=2;
+    elseif i<=40
+        level=10;
+    elseif i<=44
+        level=14;
+    elseif i<=48
+        level=-1;
+    end
+
+    if level==-1
+        cir_stim = 'empty';
+        rad_stim = 'empty';
+    else
+        cir_stim = ['cir' num2str(level)];
+        rad_stim = ['rad' num2str(level)];
+    end
+
+    data_row = {num2str(i), '2', num2str(block), 'dms', sprintf('fix(%.2f,%.2f)',fix(1), fix(2))};
     if  mod(i, 4) == 1
-        sample = 'cir'; target = 'cir'; distractor = 'rad'; target_loc = loc_1; distractor_loc = loc_2;
+        sample = cir_stim; target = 'cir0'; distractor = 'rad0'; target_loc = loc_1; distractor_loc = loc_2;
         %target_loc = loc_2; distractor_loc = loc_1;
     elseif mod(i,4) ==  2
-        sample = 'cir'; target = 'cir'; distractor = 'rad'; target_loc = loc_2; distractor_loc = loc_1;
+        sample = cir_stim; target = 'cir0'; distractor = 'rad0'; target_loc = loc_2; distractor_loc = loc_1;
         %target_loc = loc_1; distractor_loc = loc_2;
     elseif mod(i,4) == 3
-        sample = 'rad'; target = 'rad'; distractor = 'cir'; target_loc = loc_1; distractor_loc = loc_2;
+        sample = rad_stim; target = 'rad0'; distractor = 'cir0'; target_loc = loc_1; distractor_loc = loc_2;
         %target_loc = loc_2; distractor_loc = loc_1;
     else
-        sample = 'rad'; target = 'rad'; distractor = 'cir'; target_loc = loc_2; distractor_loc = loc_1;
+        sample = rad_stim; target = 'rad0'; distractor = 'cir0'; target_loc = loc_2; distractor_loc = loc_1;
         %target_loc = loc_1; distractor_loc = loc_2;
     end
     
@@ -45,7 +80,7 @@ end
 rows = [header_row; data_rows];
 
 % Write the rows to a text file
-filename = 'dms_younes.txt';
+filename = 'dms_younes4.txt';
 fid = fopen(filename, 'wt');
 fprintf(fid, '%s\t', rows{1,1:end-1});
 fprintf(fid, '%s\n', rows{1,end});

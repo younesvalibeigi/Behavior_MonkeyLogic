@@ -96,14 +96,14 @@ scene2 = create_scene(wth2,[fixation_point sample]);
 
 
 % scene 2 with Microstimulation: sample
-fixStim = SingleTarget(tracker);
-fixStim.Target = fixation_point;%sample;
-fixStim.Threshold = fix_radius;%hold_radius;
-wthStim = WaitThenHold(fixStim);
-wthStim.WaitTime = 0;             % We already knows the fixation is acquired, so we don't wait.
-wthStim.HoldTime = sample_time;
+% fixStim = SingleTarget(tracker);
+% fixStim.Target = fixation_point;%sample;
+% fixStim.Threshold = fix_radius;%hold_radius;
+% wthStim = WaitThenHold(fixStim);
+% wthStim.WaitTime = 0;             % We already knows the fixation is acquired, so we don't wait.
+% wthStim.HoldTime = sample_time;
 % Microstimulation signal
-ttl = TTLOutput(wthStim);
+ttl = TTLOutput(wth2);
 ttl.Port = 1;  % TTL #1 must be assigned in the I/O menu
 tc = TimeCounter(ttl);
 tc.Duration = 100;
@@ -156,13 +156,14 @@ end
 
 if 0==error_type
     %run_scene(scene2,20);    % Run the second scene (eventmarker 20)
+    
+    % run_scene(scene2,20);    % Run the second scene (eventmarker 20) % No stimulation
     % Microstimulation
-    run_scene(scene2,20);    % Run the second scene (eventmarker 20) % No stimulation
-%     if TrialRecord.CurrentBlock == 2
-%         run_scene(sceneStim, 80);
-%     else
-%         run_scene(scene2,20);    % Run the second scene (eventmarker 20)
-%     end
+    if TrialRecord.CurrentCondition >= 25
+        run_scene(sceneStim, 80);
+    else
+        run_scene(scene2,20);    % Run the second scene (eventmarker 20)
+    end
     if ~wth2.Success         % The failure of WithThenHold indicates that the subject didn't maintain fixation on the sample image.
         error_type = 3;      % So it is a "break fixation (3)" error.
     end
@@ -193,16 +194,33 @@ end
 
 % reward
 errors = TrialRecord.TrialErrors;
+curr_cond = TrialRecord.CurrentCondition;
+cond_cir_easy = false;%curr_cond==1 || curr_cond==2 || curr_cond==5 || curr_cond==6;
+cond_rad_diff = false;%curr_cond==15 || curr_cond==16 || curr_cond==19 || curr_cond==20 || curr_cond==23 || curr_cond==24;
+
 
 if 0==error_type
     idle(0);                 % Clear screens
 
     if length(errors) >= 3 && errors(end) == 0 && errors(end-1) == 0 && errors(end-2) == 0 %last three trials %length(errors) >= 6 && errors(end) == 0 && errors(end-1) == 0 && errors(end-2) == 0 && errors(end-3) == 0 && errors(end-4) == 0 && errors(end-5) == 0 % last five trials
-        goodmonkey(75, 'juiceline',1, 'numreward',3, 'pausetime',200, 'eventmarker',50); % 100 ms of juice x 2
+        if (cond_cir_easy || cond_rad_diff)
+            goodmonkey(75, 'juiceline',1, 'numreward',4, 'pausetime',200, 'eventmarker',50);
+        else
+            goodmonkey(75, 'juiceline',1, 'numreward',3, 'pausetime',200, 'eventmarker',50); % 100 ms of juice x 2
+        end
     elseif length(errors) >= 2 && errors(end) == 0 && errors(end-1) == 0 %last two trials  %length(errors) >= 3 && errors(end) == 0 && errors(end-1) == 0 && errors(end-2) == 0 % last three trials
-        goodmonkey(75, 'juiceline',1, 'numreward',2, 'pausetime',200, 'eventmarker',50); % 100 ms of juice x 2
+        if (cond_cir_easy || cond_rad_diff)
+            goodmonkey(75, 'juiceline',1, 'numreward',3, 'pausetime',200, 'eventmarker',50);
+        else
+            goodmonkey(75, 'juiceline',1, 'numreward',2, 'pausetime',200, 'eventmarker',50); % 100 ms of juice x 2
+            %goodmonkey(75, 'juiceline',1, 'numreward',2, 'pausetime',200, 'eventmarker',50); % --> original one
+        end
     else
-        goodmonkey(75, 'juiceline',1, 'numreward',1, 'pausetime',200, 'eventmarker',50);
+        if (cond_cir_easy || cond_rad_diff)
+            goodmonkey(75, 'juiceline',1, 'numreward',1, 'pausetime',200, 'eventmarker',50);
+        else
+            goodmonkey(75, 'juiceline',1, 'numreward',1, 'pausetime',200, 'eventmarker',50);
+        end
     end
      
 elseif 5 == error_type % choosing the distractor    || 6 == error_type || 7 == error_type 
