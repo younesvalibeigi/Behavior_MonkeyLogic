@@ -4,9 +4,9 @@ header_row = {'Condition', 'Frequency', 'Block', 'Timing File', 'TaskObject#1', 
 % Define the data rows
 data_rows = cell(10, length(header_row));
 fix = [0 0];
-rf = [-0.1 -2.0];
+rf = [-4.2 -0.5];
 pxperdeg = 36.039;
-img_size = [5 5]*pxperdeg;
+img_size = [7 7]*pxperdeg;
 loc_1 = [-6 0];
 loc_2 = [6 0];
 num_cond = 48;
@@ -44,8 +44,8 @@ for i = 1:num_cond
     end
 
     if level==-1
-        cir_stim = 'empty';
-        rad_stim = 'empty';
+        cir_stim = 'cir20';
+        rad_stim = 'rad20';
     else
         cir_stim = ['cir' num2str(level)];
         rad_stim = ['rad' num2str(level)];

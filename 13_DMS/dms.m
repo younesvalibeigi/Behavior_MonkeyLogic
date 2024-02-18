@@ -28,7 +28,7 @@ distractor = 4;
 % define time intervals (in ms):
 wait_for_fix = 20000;
 initial_fix = 500;
-sample_time = 500;%1000;% 200 Pooya
+sample_time = 300;%500;%1000;% 200 Pooya
 delay = randi([250, 500]); %700; % random 200-500 ms --> saccade delay (monkey should  not predict time), super saccade
 max_reaction_time = 3000;
 hold_target_time = 800; % pooya 750 but not important, max for Arya
