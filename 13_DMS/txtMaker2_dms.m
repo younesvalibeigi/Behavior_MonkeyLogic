@@ -4,12 +4,12 @@ header_row = {'Condition', 'Frequency', 'Block', 'Timing File', 'TaskObject#1', 
 % Define the data rows
 data_rows = cell(10, length(header_row));
 fix = [0 0];
-rf = [-2 -2];
+rf = [-3 -3];
 pxperdeg = 36.039;
-img_size = [6 6]*pxperdeg;
+img_size = [7 7]*pxperdeg;
 loc_1 = [-6 0];
 loc_2 = [6 0];
-num_cond = 8;
+num_cond = 48;
 for i = 1:num_cond
     if floor(i/(num_cond/2+1)) == 0
         block = 1; 
@@ -19,16 +19,16 @@ for i = 1:num_cond
     data_row = {num2str(i), '1', num2str(block), 'dms', sprintf('fix(%.2f,%.2f)',fix(1), fix(2))};
     
     if  mod(i, 4) == 1
-        sample = 'cir'; target = 'cir'; distractor = 'rad'; target_loc = loc_1; distractor_loc = loc_2;
+        sample = 'cir0'; target = 'cir0'; distractor = 'rad0'; target_loc = loc_1; distractor_loc = loc_2;
         %target_loc = loc_2; distractor_loc = loc_1;
     elseif mod(i,4) ==  2
-        sample = 'cir'; target = 'cir'; distractor = 'rad'; target_loc = loc_2; distractor_loc = loc_1;
+        sample = 'cir0'; target = 'cir0'; distractor = 'rad0'; target_loc = loc_2; distractor_loc = loc_1;
         %target_loc = loc_1; distractor_loc = loc_2;
     elseif mod(i,4) == 3
-        sample = 'rad'; target = 'rad'; distractor = 'cir'; target_loc = loc_1; distractor_loc = loc_2;
+        sample = 'rad0'; target = 'rad0'; distractor = 'cir0'; target_loc = loc_1; distractor_loc = loc_2;
         %target_loc = loc_2; distractor_loc = loc_1;
     else
-        sample = 'rad'; target = 'rad'; distractor = 'cir'; target_loc = loc_2; distractor_loc = loc_1;
+        sample = 'rad0'; target = 'rad0'; distractor = 'cir0'; target_loc = loc_2; distractor_loc = loc_1;
         %target_loc = loc_1; distractor_loc = loc_2;
     end
     
@@ -46,7 +46,7 @@ end
 rows = [header_row; data_rows];
 
 % Write the rows to a text file
-filename = 'dms_younes3.txt';
+filename = 'dms_younes4.txt';
 fid = fopen(filename, 'wt');
 fprintf(fid, '%s\t', rows{1,1:end-1});
 fprintf(fid, '%s\n', rows{1,end});

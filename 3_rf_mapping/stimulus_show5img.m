@@ -21,7 +21,7 @@ stim_time = 110;
 
 prbe_stim_matrix = (2:6)'; %<<------------------------------needs correction
 random_prob_loc = prbe_stim_matrix(randperm(size(prbe_stim_matrix, 1)), :);
-prob_stimulus = random_prob_loc(1:5,:);
+prob_stimulus = prbe_stim_matrix;%random_prob_loc(1:5,:);
 
 initial_fix = (200:50:400)';
 random_initial_fix = initial_fix(randperm(size(initial_fix, 1)), :);

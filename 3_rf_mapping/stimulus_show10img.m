@@ -22,11 +22,11 @@ stim_time = 100;
 
 prbe_stim_matrix = (2:11)';
 random_prob_loc = prbe_stim_matrix(randperm(size(prbe_stim_matrix, 1)), :);
-prob_stimulus = random_prob_loc(1:10,:);
+prob_stimulus = prbe_stim_matrix;%random_prob_loc(1:10,:);
 
 initial_fix = (200:50:400)';
 random_initial_fix = initial_fix(randperm(size(initial_fix, 1)), :);
-initial_fix_rand = 300;%random_initial_fix(1,:);
+initial_fix_rand = random_initial_fix(1,:);
 
 TrialRecord.User.prob_stimulus = prob_stimulus;
 bhv_variable('prob_stimulus', TrialRecord.User.prob_stimulus);
@@ -197,7 +197,7 @@ else
                                     if ~wth5.Success
                                         error_type = 4;
                                     else
-                                        goodmonkey(reward+3,'eventmarker',100);
+                                        %goodmonkey(reward+3,'eventmarker',100);
                                         run_scene(scene05,delay_eventmaker);     
                                         if ~wth05.Success
                                             error_type = 5;
@@ -240,6 +240,7 @@ else
                                                                             else
                                                                                 goodmonkey(reward+5,'eventmarker',100);
                                                                                 error_type = 0; % TASK completed
+                                                                                run_scene(scene010,delay_eventmaker);
                                                                             end
                                                                         end
                                                                     end
