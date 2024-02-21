@@ -25,7 +25,9 @@ if isfield(TrialRecord.User,'tfreq'), tfreq = TrialRecord.User.tfreq; else tfreq
 % editables
 SpatialFrequencyStep = 0.1;
 TemporalFrequencyStep = 0.1;
-editable('SpatialFrequencyStep','TemporalFrequencyStep');
+Color1 = [1 1 1];
+Color2 = [0 0 0];
+editable('SpatialFrequencyStep','TemporalFrequencyStep','-color',{'Color1','Color2'});
 
 % scene1
 fix1 = SingleTarget(eye_);
@@ -48,6 +50,8 @@ grat2b = Grating_RF_Mapper(mouse_);
 grat2b.Position = position;
 grat2b.Radius = radius;
 grat2b.Direction = direction;
+grat2b.Color1 = Color1;
+grat2b.Color2 = Color2;
 grat2b.SpatialFrequency = sfreq;
 grat2b.TemporalFrequency = tfreq;
 grat2b.SpatialFrequencyStep = SpatialFrequencyStep;

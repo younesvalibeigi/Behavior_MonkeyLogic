@@ -50,7 +50,7 @@ for i = 1:N*N*2
     data_row = {num2str(i), num2str(frequency), num2str(block), 'stimulus_show10img', sprintf('fix(%.2f,%.2f)',fix(1), fix(2))};
     
     for j = ((i-1)*10 + 1):(i*10)
-        data_row{end+1} = sprintf('pic(rf_10X10_%02d.png,%.2f,%.2f,%.2f,%.2f)', stim_rf_seq(j), rf(1), rf(2), img_size(1), img_size(2));
+        data_row{end+1} = sprintf('pic(rf_%02d.png,%.2f,%.2f,%.2f,%.2f)', stim_rf_seq(j), rf(1), rf(2), img_size(1), img_size(2));
     end
    
 
