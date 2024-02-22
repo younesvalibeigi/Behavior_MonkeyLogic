@@ -4,11 +4,11 @@ header_row = {'Condition', 'Frequency', 'Block', 'Timing File', 'TaskObject#1', 
 % Define the data rows
 data_rows = cell(10, length(header_row));
 fix = [0 0];
-rf = [-4.2 -0.5];
+rf = [-5.0 -0.0];
 pxperdeg = 36.039;
-img_size = [7 7]*pxperdeg;
-loc_1 = [-6 0];
-loc_2 = [6 0];
+img_size = [9 9]*pxperdeg;
+loc_1 = [-10 0];%[-6 0];
+loc_2 = [10 0];%[6 0];
 num_cond = 48;
 for i = 1:num_cond
     if floor(i/(num_cond/2+1)) == 0

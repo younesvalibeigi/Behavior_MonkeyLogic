@@ -36,7 +36,7 @@ hold_target_time = 800; % pooya 750 but not important, max for Arya
 % fixation window (in degrees):
 fix_radius = 1.9;%2;
 hold_radius = 2.5;
-choice_radius = 2.3;
+choice_radius = 4;%2.3;
 
 % We have used toggleobject() to present stimuli and eyejoytrack() to track
 % behavior.  This method is not very advantageous in creating dynamic,
