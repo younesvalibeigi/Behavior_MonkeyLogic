@@ -499,7 +499,7 @@ end
 idle(0); % clear screen
 trialerror(error_type);
 if error_type == 0
-    set_iti(0)
+    set_iti(50)
 else
-    set_iti(500)
+    set_iti(100)
 end

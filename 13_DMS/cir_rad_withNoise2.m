@@ -1,48 +1,73 @@
-%% stimulus pattern
+
+%% stimulus pattern (guassian filter on noise and stimulus)<--- Change this code from noise levels to contrast levels
 folder = 'stimulus';
 if ~exist(folder, 'dir')
     mkdir(folder);
 end
 
-imagesize = 75;
-cyclesPerRadius = 7.5;
+imagesize = 500;
+cyclesPerRadius = 7.9;
 pixelperCycle = (imagesize/2)/cyclesPerRadius;%5; % for circular grating
 
 numberOfCycles = 11; % for radial graing
 noise_w = 100;
+repetition_ratio = 2;%25;
 [cir, ~] = cir_grating(imagesize, pixelperCycle, noise_w);
 [rad, ~] = rad_grating(imagesize, numberOfCycles, noise_w); 
 empty = uint8(ones(imagesize, imagesize, 3)*127);
 morphedImage = uint8((0.5) * double(cir) + (0.5) * double(rad));
 % Defining the number of intermediate images between each end and the white
 % noise in the middle
-num = 30; %number of images = num*2+3
+num = 40; %number of images = num*2+3
 num_images = num*2+3;
 alpha = 2.7;
+alpha_cir_add = 1.2;
 figure,
+noise_adj = 2; % Correcting the contrast, making the noise darker
+
+midpoint = 125;
+
+cir(cir>230) = 256;
+cir(cir<=30) = 0;
+
+%rad(rad>midpoint) = 256;
+%rad(rad<=midpoint) = 0;
+
 for i=0:num
-    wn = simple_WN(imagesize);
-    wn_disp = ablend(uint8(wn), empty, alpha);
-    subplot(3,num_images, i+1); imshow(wn_disp);
-    SNR = cal_snr(cir,wn); %title(['SNR: ' num2str(SNR) ' dB']);
-    imwrite(wn_disp, fullfile(folder, ['wn' num2str(i) '.png']));
+    %wn = simple_WN(imagesize);
+    %wn_disp = uint8(wn)-noise_adj*num*2;%ablend(uint8(wn), empty, alpha);
+    %subplot(3,num_images, i+1); imshow(wn_disp);
+    %SNR = cal_snr(cir,wn); %title(['SNR: ' num2str(SNR) ' dB']);
+    %imwrite(wn_disp, fullfile(folder, ['wn' num2str(i) '.png']));
 
     if i==0
-       cir_disp = ablend(cir, empty, alpha);
-       subplot(3,num_images, i+num_images+1), imshow(cir_disp);
-       SNR = cal_snr(cir,cir); %title(['SNR: ' num2str(SNR) ' dB']);
+       cir_disp = ablend(cir, empty, alpha*alpha_cir_add);
+       %subplot(3,num_images, i+num_images+1), imshow(cir_disp);
+       %SNR = cal_snr(cir,cir); %title(['SNR: ' num2str(SNR) ' dB']);
        rad_disp = ablend(rad, empty, alpha);
-       subplot(3,num_images, i+num_images*2+1), imshow(rad_disp);
-       SNR = cal_snr(rad,rad); %title(['SNR: ' num2str(SNR) ' dB']);
+       %subplot(3,num_images, i+num_images*2+1), imshow(rad_disp);
+       %SNR = cal_snr(rad,rad); %title(['SNR: ' num2str(SNR) ' dB']);
+       fprintf('contrast Level %s : %f \n', ['cir' num2str(i) '.png'], cal_contrast(cir_disp));
+       fprintf('contrast Level %s : %f \n', ['rad' num2str(i) '.png'], cal_contrast(rad_disp));
        
        imwrite(cir_disp, fullfile(folder, ['cir' num2str(i) '.png']));
        imwrite(rad_disp, fullfile(folder, ['rad' num2str(i) '.png']));
+       imwrite(empty, fullfile(folder, ['empty.png']));
+       imwrite(empty, fullfile(folder, ['rempty.png']));
     else
-        % Add noise to the images
-        [cir_noise, rad_noise] = add_same_wn(cir, rad, 25*i, 0.1);%1*(i));
+%         % Add noise to the images
+%         [cir_noise, rad_noise] = add_same_wn(cir, rad, repetition_ratio*i, 0.5);%1*(i)); (lowNoise; 0.1, HighNoise: 0.5)
+%         % Adjust the contrast level
+%         cir_noise_disp = ablend(cir_noise, empty, alpha);
+%         rad_noise_disp = ablend(rad_noise, empty, alpha);
+               
         % Adjust the contrast level
-        cir_noise_disp = ablend(cir_noise, empty, alpha);
-        rad_noise_disp = ablend(rad_noise, empty, alpha);
+        cir_filt = ablend(cir, empty, alpha*alpha_cir_add);
+        rad_filt = ablend(rad, empty, alpha);
+        % Add noise to the images
+        [cir_noise_disp, rad_noise_disp] = add_same_wn(cir_filt, rad_filt, repetition_ratio*i^2, 0.1, noise_adj);%1*(i)); (lowNoise; 0.1, HighNoise: 0.5) <--- This works very well
+        %[cir_dim_disp, rad_dim_disp] = reduce_contrast(cir_filt, rad_filt, 1.3*i);%1*(i)); (lowNoise; 0.1, HighNoise: 0.5) <--- creating with minial noise for training
+
 
         
         %cir_noise = imhistmatch(cir_noise(:,:,1),cir, 'method', 'polynomial');
@@ -53,10 +78,94 @@ for i=0:num
         %rad_noise = imadjust(rad_noise, stretchlim(rad), []);
         
 
-        subplot(3,num_images, i+num_images+1), imshow(cir_noise_disp);
-        SNR = cal_snr(cir,cir_noise); %title(['SNR: ' num2str(SNR) ' dB']);
-        subplot(3,num_images, i+num_images*2+1), imshow(rad_noise_disp);
-        SNR = cal_snr(rad,rad_noise); %title(['SNR: ' num2str(SNR) ' dB']);
+        %subplot(3,num_images, i+num_images+1), imshow(cir_noise_disp);
+        %SNR = cal_snr(cir,cir_noise); %title(['SNR: ' num2str(SNR) ' dB']);
+        %subplot(3,num_images, i+num_images*2+1), imshow(rad_noise_disp);
+        %SNR = cal_snr(rad,rad_noise); %title(['SNR: ' num2str(SNR) ' dB']);
+
+        %cir = cir_noise;
+        %rad = rad_noise;
+        fprintf('contrast Level %s : %f \n', ['cir' num2str(i) '.png'], cal_contrast(cir_dim_disp));
+        fprintf('contrast Level %s : %f \n', ['rad' num2str(i) '.png'], cal_contrast(rad_dim_disp));
+
+        imwrite(cir_noise_disp, fullfile(folder, ['cir' num2str(i) '.png']));
+        imwrite(rad_noise_disp, fullfile(folder, ['rad' num2str(i) '.png']));
+        
+    end
+end
+
+fprintf('contrast Level %s : %f \n', 'empty.png', cal_contrast(empty));
+close all;
+
+%% stimulus pattern (guassian filter on noise and stimulus)<--- This is the code you have to run
+folder = 'stimulus';
+if ~exist(folder, 'dir')
+    mkdir(folder);
+end
+
+imagesize = 500;
+cyclesPerRadius = 7.5;
+pixelperCycle = (imagesize/2)/cyclesPerRadius;%5; % for circular grating
+
+numberOfCycles = 11; % for radial graing
+noise_w = 100;
+repetition_ratio = 2;%25;
+[cir, ~] = cir_grating(imagesize, pixelperCycle, noise_w);
+[rad, ~] = rad_grating(imagesize, numberOfCycles, noise_w); 
+empty = uint8(ones(imagesize, imagesize, 3)*127);
+morphedImage = uint8((0.5) * double(cir) + (0.5) * double(rad));
+% Defining the number of intermediate images between each end and the white
+% noise in the middle
+num = 50; %number of images = num*2+3
+num_images = num*2+3;
+alpha = 2.7;
+figure,
+noise_adj = 2; % Correcting the contrast, making the noise darker
+for i=0:num
+    wn = simple_WN(imagesize);
+    wn_disp = uint8(wn)-noise_adj*num*2;%ablend(uint8(wn), empty, alpha);
+    %subplot(3,num_images, i+1); imshow(wn_disp);
+    %SNR = cal_snr(cir,wn); %title(['SNR: ' num2str(SNR) ' dB']);
+    imwrite(wn_disp, fullfile(folder, ['wn' num2str(i) '.png']));
+
+    if i==0
+       cir_disp = ablend(cir, empty, alpha);
+       %subplot(3,num_images, i+num_images+1), imshow(cir_disp);
+       %SNR = cal_snr(cir,cir); %title(['SNR: ' num2str(SNR) ' dB']);
+       rad_disp = ablend(rad, empty, alpha);
+       %subplot(3,num_images, i+num_images*2+1), imshow(rad_disp);
+       %SNR = cal_snr(rad,rad); %title(['SNR: ' num2str(SNR) ' dB']);
+       
+       imwrite(cir_disp, fullfile(folder, ['cir' num2str(i) '.png']));
+       imwrite(rad_disp, fullfile(folder, ['rad' num2str(i) '.png']));
+    else
+%         % Add noise to the images
+%         [cir_noise, rad_noise] = add_same_wn(cir, rad, repetition_ratio*i, 0.5);%1*(i)); (lowNoise; 0.1, HighNoise: 0.5)
+%         % Adjust the contrast level
+%         cir_noise_disp = ablend(cir_noise, empty, alpha);
+%         rad_noise_disp = ablend(rad_noise, empty, alpha);
+               
+        % Adjust the contrast level
+        cir_filt = ablend(cir, empty, alpha);
+        rad_filt = ablend(rad, empty, alpha);
+        % Add noise to the images
+        %[cir_noise_disp, rad_noise_disp] = add_same_wn(cir_filt, rad_filt, repetition_ratio*i^2, 0.1, noise_adj);%1*(i)); (lowNoise; 0.1, HighNoise: 0.5) <--- This works very well
+        [cir_noise_disp, rad_noise_disp] = add_same_wn(cir_filt, rad_filt, repetition_ratio*i^2, 0.05, noise_adj);%1*(i)); (lowNoise; 0.1, HighNoise: 0.5) <--- creating with minial noise for training
+
+
+        
+        %cir_noise = imhistmatch(cir_noise(:,:,1),cir, 'method', 'polynomial');
+        %rad_noise = imhistmatch(rad_noise(:,:,1),rad, 'method', 'polynomial');
+        %cir_noise = histeq(cir_noise, imhist(cir));
+        %rad_noise = histeq(rad_noise, imhist(rad));
+        %cir_noise = imadjust(cir_noise, stretchlim(cir), []);
+        %rad_noise = imadjust(rad_noise, stretchlim(rad), []);
+        
+
+        %subplot(3,num_images, i+num_images+1), imshow(cir_noise_disp);
+        %SNR = cal_snr(cir,cir_noise); %title(['SNR: ' num2str(SNR) ' dB']);
+        %subplot(3,num_images, i+num_images*2+1), imshow(rad_noise_disp);
+        %SNR = cal_snr(rad,rad_noise); %title(['SNR: ' num2str(SNR) ' dB']);
 
         %cir = cir_noise;
         %rad = rad_noise;
@@ -65,6 +174,7 @@ for i=0:num
 
     end
 end
+close all;
 
 %% Stimuli: Contrast Adjusted
 
@@ -214,7 +324,9 @@ function SNR = cal_snr(sig, sig_noise)
     SNR = snr(sig, sig - sig_noise);
 end
 
-function [cir_noise, rad_noise] = add_same_wn(cir, rad, repetition,noise_w)
+
+
+function [cir_noise, rad_noise] = add_same_wn(cir, rad, repetition,noise_w, noise_adj)
 % noise_w should be between 0 and 1
 % repetition is how many times white noise is added to the image
 % you should play with repetition and noise_w to get the best result
@@ -226,7 +338,7 @@ function [cir_noise, rad_noise] = add_same_wn(cir, rad, repetition,noise_w)
     for i=1:repetition
         %wn = centerDecay_WN(height);
         wn = simple_WN(height);
-        noise_mat = (double(wn)-127)*noise_w;
+        noise_mat = (double(wn)-127-noise_adj)*noise_w;%noise_mat = (double(wn)-127)*noise_w;
         %noise_mat_cir = imhistmatch(noise_mat, double(cir(:,:,1)));
         %noise_mat_rad = imhistmatch(noise_mat, double(rad(:,:,1)));
         cir = uint8(double(cir)+noise_mat);
@@ -339,6 +451,7 @@ function [imageMatrix imageMatrix_noise] = cir_grating(imageSize, pixelsPerPerio
     spatialFrequency = 1 / pixelsPerPeriod; % How many periods/cycles are there in a pixel?
     radiansPerPixel = spatialFrequency * (2 * pi); % = (periods per pixel) * (2 pi radians per period)
     a=cos(tiltInRadians)*radiansPerPixel;
+    
     %range = 1:x_center;
     %r_ref = sin(range*a)%.*exp(-range*0.1))+1)*127.5;
     %figure,plot(r_ref)
@@ -359,9 +472,9 @@ function [imageMatrix imageMatrix_noise] = cir_grating(imageSize, pixelsPerPerio
             %pixelValue = imageMatrix(y, x);
             r = sqrt((x - x_center).^2 + (y - y_center).^2);
             %if r<=x_center
-                pixelValue = sin(r*a);%*exp(-r*(128*0.07/imageSize));
+                pixelValue = sin(2*pi*r/pixelsPerPeriod+pi/2);%sin(r*a);%*exp(-r*(128*0.07/imageSize));
 
-                mappedValue = (pixelValue + 1) * 127.5;  % Scale to the range [0, 255]
+                mappedValue = (pixelValue + 1) * 128;  % Scale to the range [0, 255]
                 
                 
                 % noisy image
