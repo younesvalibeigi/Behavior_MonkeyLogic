@@ -9,39 +9,42 @@ pxperdeg = 36.039;
 img_size = [10 10]*pxperdeg;
 loc_1 = [-10 0];%[-6 0];
 loc_2 = [10 0];%[6 0];
-num_cond = 48;
+num_cond = 101*4;%48;
+
 for i = 1:num_cond
-    if i<25
-        block = 1; 
-    else
-        block = 1;
-    end
-    levels = [0 1 2 10 15 40];
-    if i<=4
-        level=levels(1);
-    elseif i<=8
-        level=levels(2);
-    elseif i<=12
-        level=levels(3);
-    elseif i<=16
-        level=levels(4);
-    elseif i<=20
-        level=levels(5);
-    elseif i<=24
-        level=levels(6);
-    elseif i<=28
-        level=levels(1);
-    elseif i<=32
-        level=levels(2);
-    elseif i<=36
-        level=levels(3);
-    elseif i<=40
-        level=levels(4);
-    elseif i<=44
-        level=levels(5);
-    elseif i<=48
-        level=levels(6);
-    end
+    block = 1;
+    level = floor((i-1)/4);
+%     if i<25
+%         block = 1; 
+%     else
+%         block = 1;
+%     end
+%     levels = [0 1 2 10 15 40];
+%     if i<=4
+%         level=levels(1);
+%     elseif i<=8
+%         level=levels(2);
+%     elseif i<=12
+%         level=levels(3);
+%     elseif i<=16
+%         level=levels(4);
+%     elseif i<=20
+%         level=levels(5);
+%     elseif i<=24
+%         level=levels(6);
+%     elseif i<=28
+%         level=levels(1);
+%     elseif i<=32
+%         level=levels(2);
+%     elseif i<=36
+%         level=levels(3);
+%     elseif i<=40
+%         level=levels(4);
+%     elseif i<=44
+%         level=levels(5);
+%     elseif i<=48
+%         level=levels(6);
+%     end
 
     if level==-1
         cir_stim = 'empty';
@@ -80,7 +83,7 @@ end
 rows = [header_row; data_rows];
 
 % Write the rows to a text file
-filename = 'dms_younes4.txt';
+filename = 'dms_younes5.txt';
 fid = fopen(filename, 'wt');
 fprintf(fid, '%s\t', rows{1,1:end-1});
 fprintf(fid, '%s\n', rows{1,end});
