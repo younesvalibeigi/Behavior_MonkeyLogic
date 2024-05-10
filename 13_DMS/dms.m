@@ -226,7 +226,7 @@ if 0==error_type
 elseif 5 == error_type % choosing the distractor    || 6 == error_type || 7 == error_type 
     idle(1100);               % Clear screens
 elseif 3 == error_type || 4 == error_type % Break fixation during sample time or delay time
-    idle(1100)
+    idle(2000)
 else
     idle(0)
 end
