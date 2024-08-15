@@ -9,17 +9,17 @@ pxperdeg = 36.039;
 img_size = [9.50 9.50]*pxperdeg;
 loc_1 = [-10 0];%[-6 0];
 loc_2 = [10 0];%[6 0];
-num_levels = 6;
+num_levels = 6*2;
 num_cond = num_levels*4;%48;
 
 for i = 1:num_cond
     block = 1;
     level = floor((i-1)/4);
-    if i<25
-        block = 1; 
-    else
-        block = 1;
-    end
+    %if i<25
+    %    block = 1; 
+    %else
+    %    block = 1;
+    %end
     levels = [0 6 14 28 49 85];
     blocks = {'1 2 3 4 5 6 7', '2 3 4 5 6 7', '3 4 5 6 7', '4 5 6 7', '5 6 7', '6 7'};
     if i<=1*4
@@ -50,14 +50,14 @@ for i = 1:num_cond
         level=levels(3);
         block = blocks{3};
     elseif i<=10*4
-        level=levels{4};
-        block = blocks{5};
+        level=levels(4);
+        block = blocks{4};
     elseif i<=11*4
         level=levels(5);
-        block = blocks{6};
+        block = blocks{5};
     elseif i<=12*4
         level=levels(6);
-        block = blocks{7};
+        block = blocks{6};
     end
 
     if level==-1
@@ -97,7 +97,7 @@ end
 rows = [header_row; data_rows];
 
 % Write the rows to a text file
-filename = 'dms_younes6.txt';
+filename = 'dms0.txt';
 fid = fopen(filename, 'wt');
 fprintf(fid, '%s\t', rows{1,1:end-1});
 fprintf(fid, '%s\n', rows{1,end});
