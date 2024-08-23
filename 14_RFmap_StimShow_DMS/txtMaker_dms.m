@@ -4,13 +4,14 @@ header_row = {'Condition', 'Frequency', 'Block', 'Timing File', 'TaskObject#1', 
 % Define the data rows
 data_rows = cell(10, length(header_row));
 fix = [0 0];
-rf = [-6.0 -6.0];
+rf = [-6 -6];
 pxperdeg = 36.039;
-img_size = [9.50 9.50]*pxperdeg;
+img_size = [10 10]*pxperdeg;
 loc_1 = [-10 0];%[-6 0];
 loc_2 = [10 0];%[6 0];
 num_levels = 6*2;
 num_cond = num_levels*4;%48;
+freq = 1;
 
 for i = 1:num_cond
     block = 1;
@@ -68,7 +69,7 @@ for i = 1:num_cond
         rad_stim = ['rad' num2str(level)];
     end
 
-    data_row = {num2str(i), '2', block, 'dms', sprintf('fix(%.2f,%.2f)',fix(1), fix(2))};
+    data_row = {num2str(i), num2str(freq), block, 'dms', sprintf('fix(%.2f,%.2f)',fix(1), fix(2))};
     if  mod(i, 4) == 1
         sample = cir_stim; target = 'cir0'; distractor = 'rad0'; target_loc = loc_1; distractor_loc = loc_2;
         %target_loc = loc_2; distractor_loc = loc_1;
