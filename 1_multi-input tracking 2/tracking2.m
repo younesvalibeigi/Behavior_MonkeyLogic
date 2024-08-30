@@ -40,7 +40,7 @@ scene1 = create_scene(wth1,1);
 
 % scene2
 rwd2a = RewardScheduler(fix1);  
-rwd2a.Schedule = [500 1300 1300 60 90];  % during fixation, give a 100-ms reward every seconds
+rwd2a.Schedule = [700 1800 1800 60 90];  % during fixation, give a 100-ms reward every seconds
     %5000 1000 1000 150 95];            % if fix is maintained longer than 5000 ms, increase the reward to 150 ms
 lh2a = LooseHold(rwd2a);  % lh2a stops when fixation is maintained for 10 s or broken longer than 300 ms.
 lh2a.HoldTime = 100000;

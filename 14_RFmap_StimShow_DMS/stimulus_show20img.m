@@ -8,7 +8,7 @@ delay_eventmaker = 30;
 reward_eventmaker = 90;
 
 
-editable('reward','stim_time')
+%editable('reward','stim_time')
 %mouse_.showcursor(false);  % hide the mouse cursor from the subject
 fixation_point = 1;
 % Timing
@@ -437,7 +437,8 @@ else
                                                                             if ~wth020.Success
                                                                                 error_type = 9;
                                                                             else
-                                                                                goodmonkey(reward+5,'eventmarker',reward);
+                                                                                %goodmonkey(reward+5,'eventmarker',reward);
+                                                                                goodmonkey(reward, 'juiceline',1, 'numreward',1, 'pausetime',200, 'eventmarker',reward_eventmaker)
                                                                                 error_type = 0; % TASK completed
                                                                             end
                                                                         end
@@ -501,5 +502,5 @@ trialerror(error_type);
 if error_type == 0
     set_iti(50)
 else
-    set_iti(100)
+    set_iti(500)
 end
