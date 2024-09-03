@@ -1,0 +1,49 @@
+function cond_no = userplot_dms(TrialRecord, MLConfig)
+    conditions = TrialRecord.ConditionsPlayed;
+    errors = TrialRecord.TrialErrors;
+    
+    N=24;
+    cond_set = 1:N;
+    performance = 0;
+    anal_range = N*2;
+    freqs = ones(1,N)*2;
+    indices_played = find(errors == 0 | errors == 5);
+    num_toAnal = floor(length(indices_played)/anal_range)*anal_range;
+    
+    if mod(length(indices_played), anal_range)==0
+        disp([num2str(floor(length(indices_played)/anal_range)) '  point of analysis'])
+
+    end
+    cond_played = conditions(indices_played);
+    error_played = errors(indices_played);
+
+
+        
+    
+    sum_error_correct = zeros(2,N/4); % first row is cir second is rad over six levels
+    sum_error_wrong= zeros(2,N/4);
+    for i=1:(N/2)/2 % we go for six levels
+        indices_cir_correct = find((cond_played==(i-1)*4+1 | cond_played==(i-1)*4+2) & error_played==0);
+        sum_error_correct(1, i) = length(indices_cir_correct);
+        indices_cir_wrong = find((cond_played==(i-1)*4+1 | cond_played==(i-1)*4+2) & error_played==5);
+        sum_error_wrong(1, i) = length(indices_cir_wrong);
+
+        indices_rad_correct = find((cond_played==(i-1)*4+3 | cond_played==(i-1)*4+4) & error_played==0);
+        sum_error_correct(2, i) = length(indices_rad_correct);
+        indices_rad_wrong = find((cond_played==(i-1)*4+3 | cond_played==(i-1)*4+4) & error_played==5);
+        sum_error_wrong(2, i) = length(indices_rad_wrong);
+        
+    end
+    %sum_error_correct
+    %sum_error_wrong
+    performance = sum_error_correct ./(sum_error_correct+sum_error_wrong);
+    disp_performance = [(1-performance(1,:)) flip(performance(2,:))];
+
+    plot(disp_performance);
+    xlabel('cir-rad');
+    ylabel('radial response');
+    title('Performance Plot');
+    grid on;
+
+
+end
