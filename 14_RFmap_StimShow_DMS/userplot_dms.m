@@ -11,7 +11,7 @@ function cond_no = userplot_dms(TrialRecord, MLConfig)
     num_toAnal = floor(length(indices_played)/anal_range)*anal_range;
     
     if mod(length(indices_played), anal_range)==0
-        disp([num2str(floor(length(indices_played)/anal_range)) '  point of analysis'])
+        %disp([num2str(floor(length(indices_played)/anal_range)) '  point of analysis'])
 
     end
     cond_played = conditions(indices_played);
@@ -37,13 +37,27 @@ function cond_no = userplot_dms(TrialRecord, MLConfig)
     %sum_error_correct
     %sum_error_wrong
     performance = sum_error_correct ./(sum_error_correct+sum_error_wrong);
-    disp_performance = [(1-performance(1,:)) flip(performance(2,:))];
+    if N==24
+        disp_performance = [(1-performance(1,:)) flip(performance(2,:))];
+        plot(disp_performance, 'b-o', 'DisplayName', 'Ctrl');
+        xlabel('cir-rad');
+        ylabel('radial response');
+        title('Performance Plot');
+        grid on;
+    elseif N==48
+        midPoint = (N/4)/2;
+        disp_performance_ctrl = [(1-performance(1,1:midPoint)) flip(performance(2,1:midPoint))];
+        plot(disp_performance_ctrl, 'b-o', 'DisplayName', 'Ctrl');
+        disp_performance_Mrstm = [(1-performance(1,midPoint+1:N/4)) flip(performance(2,midPoint+1:N/4))];
+        hold on,
+        plot(disp_performance_Mrstm, 'r-o', 'DisplayName', 'Mrstm');
+        hold off;
+        xlabel('cir-rad');
+        ylabel('radial response');
+        title('Performance Plot');
+    end
 
-    plot(disp_performance);
-    xlabel('cir-rad');
-    ylabel('radial response');
-    title('Performance Plot');
-    grid on;
+   
 
 
 end

@@ -2,12 +2,13 @@ function cond_no = cond_selection_dms(TrialRecord, MLConfig)
     conditions = TrialRecord.ConditionsPlayed;
     errors = TrialRecord.TrialErrors;
     
-    N=24;
+    N=48;
     cond_set = 1:N;
 
 
     indices_played = find(errors == 0 | errors == 5);
     cond_played = conditions(indices_played);
+    error_played = errors(indices_played);
     remainder_length = mod(length(cond_played), N);
     % print this:
     if remainder_length == 0
@@ -27,12 +28,15 @@ function cond_no = cond_selection_dms(TrialRecord, MLConfig)
     else
         cond_no = available_cond_set(1);
     end
-
+    
+    % Show the break fixation stimulus again
     if length(errors)>1
         if ~(errors(end) == 0 || errors(end) == 5)
             cond_no = conditions(end);
         end
     end
+    
+    
 
 
 end

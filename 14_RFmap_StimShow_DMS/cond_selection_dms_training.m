@@ -5,21 +5,23 @@ function cond_no = cond_selection_dms_training(TrialRecord, MLConfig)
     N=24;
     cond_set = 1:N;
     performance = 0;
-    anal_range = N*2;
+    anal_range = N;%*2;
     freqs = ones(1,N)*2;
     indices_played = find(errors == 0 | errors == 5);
-    num_toAnal = floor(length(indices_played)/anal_range)*anal_range;
+    num_toAnal = floor(length(indices_played)/anal_range)*anal_range; % How many should be analyzed
     
     if mod(length(indices_played), anal_range)==0
         disp([num2str(floor(length(indices_played)/anal_range)) '  point of analysis'])
 
     end
 
-    if num_toAnal>=anal_range
+    if num_toAnal<anal_range
+        cond_played = conditions(indices_played);
+        error_played = errors(indices_played);
+
+    elseif num_toAnal>=anal_range
         cond_played = conditions(indices_played(1:num_toAnal));
         error_played = errors(indices_played(1:num_toAnal));
-        
-    
         sum_error_correct = zeros(2,N/4); % first row is cir second is rad over six levels
         sum_error_wrong= zeros(2,N/4);
         for i=1:(N/2)/2 % we go for six levels
@@ -82,8 +84,11 @@ function cond_no = cond_selection_dms_training(TrialRecord, MLConfig)
     end
     %freqs
     %performance
+    freqs(isnan(freqs)) = 2;
+    freqs(isinf(freqs)) = 10;
     weights = freqs / sum(freqs);
     if mod(length(indices_played), anal_range)==0
+        disp(freqs)
         disp(weights)
     end
     
@@ -117,6 +122,23 @@ function cond_no = cond_selection_dms_training(TrialRecord, MLConfig)
             cond_no = conditions(end);
         end
     end
+
+
+    % if make a mistake 3 times for an stimulus, keep showing it until she
+    % gets it right
+    if exist('cond_played', 'var') && length(cond_played)>2
+        %if length(cond_played)>1
+            indices_lastStim = find(cond_played == cond_played(end-1)); % Previous trial not this trial
+            errors_lastStim = error_played(indices_lastStim);
+            if length(errors_lastStim)>3
+                if errors_lastStim(end) == 5 && errors_lastStim(end-1) == 5 && errors_lastStim(end-2) == 5
+                    disp("Making a mistke 3 times")
+                    cond_no = cond_played(end-1);
+                end
+            end
+        %end
+    end
+    %cond_no = 24;
 
 
 end
