@@ -201,7 +201,7 @@ cond_rad_diff = false;%curr_cond==15 || curr_cond==16 || curr_cond==19 || curr_c
 
 if 0==error_type
     idle(0);                 % Clear screens
-
+    % Gradually increasing num of juice rewards.
     if length(errors) >= 3 && errors(end) == 0 && errors(end-1) == 0 && errors(end-2) == 0 %last three trials %length(errors) >= 6 && errors(end) == 0 && errors(end-1) == 0 && errors(end-2) == 0 && errors(end-3) == 0 && errors(end-4) == 0 && errors(end-5) == 0 % last five trials
         if (cond_cir_easy || cond_rad_diff)
             goodmonkey(75, 'juiceline',1, 'numreward',4, 'pausetime',200, 'eventmarker',50);
@@ -222,7 +222,15 @@ if 0==error_type
             goodmonkey(75, 'juiceline',1, 'numreward',1, 'pausetime',200, 'eventmarker',50);
         end
     end
-     
+    % give juice with random number of drops.
+    % Define the numbers and their corresponding probabilities
+%     numbers = [1, 2, 3, 4];
+%     probabilities = [0.50, 0.25, 0.15 0.10];
+%     % Sample a number based on the specified probabilities
+%     num_juice = randsample(numbers, 1, true, probabilities);
+%     goodmonkey(75, 'juiceline',1, 'numreward',num_juice, 'pausetime',200, 'eventmarker',50);
+
+
 elseif 5 == error_type % choosing the distractor    || 6 == error_type || 7 == error_type 
     idle(100);  %Previously 1100              % Clear screens
 elseif 3 == error_type || 4 == error_type % Break fixation during sample time or delay time

@@ -2,7 +2,7 @@ function cond_no = userplot_dms(TrialRecord, MLConfig)
     conditions = TrialRecord.ConditionsPlayed;
     errors = TrialRecord.TrialErrors;
     
-    N=24;
+    N=48;
     cond_set = 1:N;
     performance = 0;
     anal_range = N*2;
