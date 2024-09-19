@@ -21,7 +21,9 @@ for i = 1:num_cond
     %else
     %    block = 1;
     %end
-    levels = [0 6 14 28 49 85];
+    %levels = [0 6 14 28 49 85]; %Used before sept 16, 2024
+    levels = [0 6 20 37 49 90];%Used after sept 16, 2024
+
     blocks = {'1 2 3 4 5 6 7', '2 3 4 5 6 7', '3 4 5 6 7', '4 5 6 7', '5 6 7', '6 7'};
     if i<=1*4
         level=levels(1);

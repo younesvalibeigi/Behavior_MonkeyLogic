@@ -89,7 +89,7 @@ function cond_no = cond_selection_dms_training(TrialRecord, MLConfig)
     weights = freqs / sum(freqs);
     if mod(length(indices_played), anal_range)==0
         disp(freqs)
-        disp(weights)
+        %disp(weights)
     end
     
     cond_no = randsample(cond_set, 1, true, weights);
