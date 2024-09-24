@@ -225,7 +225,7 @@ if 0==error_type
     % give juice with random number of drops.
     % Define the numbers and their corresponding probabilities
     numbers = [0, 1, 2, 3, 4];
-    probabilities = [0.05, 0.75, 0.15, 0.04 0.01];
+    probabilities = [0.07, 0.73, 0.15, 0.04 0.01];
     % Sample a number based on the specified probabilities
     num_juice = randsample(numbers, 1, true, probabilities);
     goodmonkey(75, 'juiceline',1, 'numreward',num_juice, 'pausetime',200, 'eventmarker',50);

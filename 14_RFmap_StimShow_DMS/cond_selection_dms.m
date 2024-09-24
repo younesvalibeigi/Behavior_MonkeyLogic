@@ -2,7 +2,10 @@ function cond_no = cond_selection_dms(TrialRecord, MLConfig)
     conditions = TrialRecord.ConditionsPlayed;
     errors = TrialRecord.TrialErrors;
     
-    N=48;
+    num_levels = 6;
+    num_sets = 3;
+    N=num_levels*4*num_sets;
+    %N=72;
     cond_set = 1:N;
 
 

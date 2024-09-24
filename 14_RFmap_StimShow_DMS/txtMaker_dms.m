@@ -10,10 +10,13 @@ img_size = [9.5 9.5]*pxperdeg;
 loc_1 = [-10 0];%[-6 0];
 loc_2 = [10 0];%[6 0];
 num_levels = 6*2;
-num_cond = num_levels*4;%48;
+size_set = num_levels*2;
+num_set = 3;
+num_cond = size_set*num_set;%48;
 freq = 2;
 
 for i = 1:num_cond
+    i_fullSet = floor((i-1)/size_set);
     block = 1;
     level = floor((i-1)/4);
     %if i<25
@@ -25,40 +28,22 @@ for i = 1:num_cond
     levels = [0 6 20 37 49 90];%Used after sept 16, 2024
 
     blocks = {'1 2 3 4 5 6 7', '2 3 4 5 6 7', '3 4 5 6 7', '4 5 6 7', '5 6 7', '6 7'};
-    if i<=1*4
+    if i_fullSet*size_set+1<=i && i<=i_fullSet*size_set+4
         level=levels(1);
         block = blocks{1};
-    elseif i<=2*4
+    elseif i_fullSet*size_set+5<=i && i<=i_fullSet*size_set+8
         level=levels(2);
         block = blocks{2};
-    elseif i<=3*4
+    elseif i_fullSet*size_set+9<=i && i<=i_fullSet*size_set+12
         level=levels(3);
         block = blocks{3};
-    elseif i<=4*4
+    elseif i_fullSet*size_set+13<=i && i<=i_fullSet*size_set+16
         level=levels(4);
         block = blocks{4};
-    elseif i<=5*4
+    elseif i_fullSet*size_set+17<=i && i<=i_fullSet*size_set+20
         level=levels(5);
         block = blocks{5};
-    elseif i<=6*4
-        level=levels(6);
-        block = blocks{6};
-    elseif i<=7*4
-        level=levels(1);
-        block = blocks{1};
-    elseif i<=8*4
-        level=levels(2);
-        block = blocks{2};
-    elseif i<=9*4
-        level=levels(3);
-        block = blocks{3};
-    elseif i<=10*4
-        level=levels(4);
-        block = blocks{4};
-    elseif i<=11*4
-        level=levels(5);
-        block = blocks{5};
-    elseif i<=12*4
+    elseif i_fullSet*size_set+21<=i && i<=i_fullSet*size_set+24
         level=levels(6);
         block = blocks{6};
     end
