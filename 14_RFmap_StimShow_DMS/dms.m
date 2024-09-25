@@ -1,5 +1,5 @@
 hotkey('q', 'escape_screen(); assignin(''caller'',''continue_'',false);');
-bhv_code(10,'Fix Cue',20,'Sample',30,'Delay',40,'Go',50,'Reward', 80, 'Microstimulation');  % behavioral codes
+bhv_code(10,'Fix Cue',20,'Sample',30,'Delay',40,'Go',50,'Reward', 80, 'Microstimulation1',90, 'Microstimulation2');  % behavioral codes
 
 % detect an available tracker
 if exist('eye_','var'), tracker = eye_;
@@ -108,6 +108,12 @@ ttl.Port = 1;  % TTL #1 must be assigned in the I/O menu
 tc = TimeCounter(ttl);
 tc.Duration = 100;
 sceneStim = create_scene(ttl, [fixation_point sample]);
+
+ttl2 = TTLOutput(wth2);
+ttl2.Port = 2;  % TTL #1 must be assigned in the I/O menu
+tc2 = TimeCounter(ttl2);
+tc2.Duration = 100;
+sceneStim2 = create_scene(ttl2, [fixation_point sample]);
 %run_scene(scene);
 %sceneStim = create_scene(wthStim,[fixation_point sample]);
 %scene2 = create_scene(wth2,fixation_point);
@@ -159,7 +165,9 @@ if 0==error_type
     
     % run_scene(scene2,20);    % Run the second scene (eventmarker 20) % No stimulation
     % Microstimulation
-    if TrialRecord.CurrentCondition >= 25
+    if TrialRecord.CurrentCondition >= 49
+        run_scene(sceneStim2, 90);
+    elseif TrialRecord.CurrentCondition >= 25
         run_scene(sceneStim, 80);
     else
         run_scene(scene2,20);    % Run the second scene (eventmarker 20)
