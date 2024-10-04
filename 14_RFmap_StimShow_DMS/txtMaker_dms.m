@@ -4,9 +4,10 @@ header_row = {'Condition', 'Frequency', 'Block', 'Timing File', 'TaskObject#1', 
 % Define the data rows
 data_rows = cell(10, length(header_row));
 fix = [0 0];
-rf = [-5.5 -2];
+rf = [-5 -2];
 pxperdeg = 36.039;
-img_size = [9.5 9.5]*pxperdeg;
+img_size = [10 10]*pxperdeg;
+target_im_size = [10 10]*pxperdeg;
 loc_1 = [-10 0];%[-6 0];
 loc_2 = [10 0];%[6 0];
 num_levels = 6*2;
@@ -74,8 +75,8 @@ for i = 1:num_cond
 
     data_row{end+1} = sprintf('pic(%s.png,%.2f,%.2f,%.2f,%.2f)', sample, rf(1), rf(2), img_size(1), img_size(2));
     
-    data_row{end+1} = sprintf('pic(%s.png,%.2f,%.2f,%.2f,%.2f)', target, target_loc(1), target_loc(2), img_size(1), img_size(2));
-    data_row{end+1} = sprintf('pic(%s.png,%.2f,%.2f,%.2f,%.2f)', distractor, distractor_loc(1), distractor_loc(2), img_size(1), img_size(2));
+    data_row{end+1} = sprintf('pic(%s.png,%.2f,%.2f,%.2f,%.2f)', target, target_loc(1), target_loc(2), target_im_size(1), target_im_size(2));
+    data_row{end+1} = sprintf('pic(%s.png,%.2f,%.2f,%.2f,%.2f)', distractor, distractor_loc(1), distractor_loc(2), target_im_size(1), target_im_size(2));
 
     
     data_rows(i, :) = data_row;
