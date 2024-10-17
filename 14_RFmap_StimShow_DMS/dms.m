@@ -248,3 +248,18 @@ else
 end
 
 trialerror(error_type);      % Add the result to the trial history
+
+% Ending task
+total_num_fullSets = 5;
+
+num_levels = 6;
+num_sets = 3;
+N=num_levels*4*num_sets;
+%errors = TrialRecord.TrialErrors;
+if length(errors) > 3
+    errors_0 = errors(errors == 0);
+    errors_5 = errors(errors == 5);
+    if (length(errors_0)+length(errors_5))>(total_num_fullSets*N)+5 % five extra for safety
+        escape_screen();
+    end
+end

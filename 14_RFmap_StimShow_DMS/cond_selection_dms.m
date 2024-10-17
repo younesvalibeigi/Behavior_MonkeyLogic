@@ -1,6 +1,8 @@
 function cond_no = cond_selection_dms(TrialRecord, MLConfig)
     conditions = TrialRecord.ConditionsPlayed;
     errors = TrialRecord.TrialErrors;
+
+    total_num_fullSets = 5;
     
     num_levels = 6;
     num_sets = 3;

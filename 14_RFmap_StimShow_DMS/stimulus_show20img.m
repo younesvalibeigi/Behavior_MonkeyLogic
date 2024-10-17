@@ -504,3 +504,10 @@ if error_type == 0
 else
     set_iti(500)
 end
+
+errors = TrialRecord.TrialErrors;
+errors_0 = errors(errors == 0);
+if length(errors_0)>100
+    escape_screen();
+end
+
