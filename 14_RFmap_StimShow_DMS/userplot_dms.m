@@ -1,7 +1,7 @@
 function cond_no = userplot_dms(TrialRecord, MLConfig)
     conditions = TrialRecord.ConditionsPlayed;
     errors = TrialRecord.TrialErrors;
-    num_levels = 6;
+    num_levels = 7;
     num_sets = 3;
     N=num_levels*4*num_sets;
     cond_set = 1:N;

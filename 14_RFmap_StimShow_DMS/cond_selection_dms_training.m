@@ -2,7 +2,7 @@ function cond_no = cond_selection_dms_training(TrialRecord, MLConfig)
     conditions = TrialRecord.ConditionsPlayed;
     errors = TrialRecord.TrialErrors;
     
-    N=24;
+    N=4*7;
     cond_set = 1:N;
     performance = 0;
     anal_range = N;%*2;
