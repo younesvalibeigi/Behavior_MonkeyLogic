@@ -4,7 +4,7 @@ function cond_no = cond_selection_dms(TrialRecord, MLConfig)
 
     total_num_fullSets = 5;
     
-    num_levels = 6;
+    num_levels = 7;
     num_sets = 3;
     N=num_levels*4*num_sets;
     %N=72;
