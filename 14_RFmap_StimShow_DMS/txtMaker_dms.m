@@ -4,16 +4,19 @@ header_row = {'Condition', 'Frequency', 'Block', 'Timing File', 'TaskObject#1', 
 % Define the data rows
 data_rows = cell(10, length(header_row));
 fix = [0 0];
-rf = [-4 -2];
+rf = [-7 -2];
 pxperdeg = 36.039;
-img_size = [9.5 9.5]*pxperdeg;
+img_size = [10 10]*pxperdeg;
 target_im_size = [10 10]*pxperdeg;
 loc_1 = [-10 0];%[-6 0];
 loc_2 = [10 0];%[6 0];
 
 %levels = [0 6 14 28 49 85]; %Used before sept 16, 2024
 %levels = [0 6 20 37 49 90];%Used after sept 16, 2024
-levels = [0 6 20 37 49 90 101];%Used after Nov 6, 2024
+%levels = [0 6 20 37 49 90 101];%Used after Nov 6, 2024 ONLY TRIED ONE DAY
+%AND NOT GOOD
+levels = [0 6 20 37 49 90];
+
 num_levels = length(levels)*2;
 size_set = num_levels*2;
 num_set = 3;
