@@ -1,5 +1,5 @@
 if ~exist('eye_','var'), error('This demo requires eye signal input. Please set it up or try the simulation mode.'); end
-hotkey('x', 'escape_screen(); assignin(''caller'',''continue_'',false);');
+hotkey('q', 'escape_screen(); assignin(''caller'',''continue_'',false);');
 hotkey('r', 'goodmonkey(70, ''juiceline'', 1, ''eventmarker'', 100);');   % manual reward
 
 if exist('eye_','var'), tracker = eye_;
@@ -18,7 +18,7 @@ mouse_.showcursor(false);  % hide the mouse cursor from the subject
 fixation_point = 1;
 
 % info for preparing each stimulus
-rf = [0.5,0.9];
+rf = [-5.0,-2.0];
 coherence = 100;%ceil(rand(1)*100);
 direction = floor(rand(1)*12)*30; % You have to provide the direction to RF map
 %floor(rand(1)*12)*30;%rand(1)*360;
@@ -32,10 +32,10 @@ dot_shape = dot_shape{end};
 %editable('num_dot','dot_size','-color','dot_color','-category','dot_shape');
 
 delay_time = 500;
-stim_time = 1000;
+stim_time = 2000;
 reward = 100;
 
-rf_radius = 2.5; % you have to provide this
+rf_radius = 4; % you have to provide this
 stim_radius = rf_radius;%rf_radius/2;
 %stim_pos_x = [-2*rf_radius -rf_radius 0 rf_radius 2*rf_radius] + rf(1);
 %stim_pos_y = [-2*rf_radius -rf_radius 0 rf_radius 2*rf_radius] + rf(2);
@@ -43,10 +43,10 @@ stim_radius = rf_radius;%rf_radius/2;
 % stim_pos_y = [-2*rf_radius 0 2*rf_radius] + rf(2);
 stim_pos = rf;
 %stim_pos = [stim_pos_x(randi(length(stim_pos_x))) stim_pos_y(randi(length(stim_pos_y)))];
-
-stim_direction = floor(rand(1)*12)*30;
-spatialfreq = 1;
-temporalfreq = 3.2;
+curr_cond = TrialRecord.CurrentCondition;
+stim_direction = (curr_cond-1)*22.5;
+spatialfreq = 0.5;
+temporalfreq = 1;
 phase = 0;
 
 %save variables
