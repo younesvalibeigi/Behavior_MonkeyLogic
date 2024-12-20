@@ -165,9 +165,9 @@ if 0==error_type
     
     % run_scene(scene2,20);    % Run the second scene (eventmarker 20) % No stimulation
     % Microstimulation
-    if TrialRecord.CurrentCondition >= 57%49
+    if TrialRecord.CurrentCondition >= 49%49
         run_scene(sceneStim2, 90);
-    elseif TrialRecord.CurrentCondition >= 29%25
+    elseif TrialRecord.CurrentCondition >= 25%25
         run_scene(sceneStim, 80);
     else
         run_scene(scene2,20);    % Run the second scene (eventmarker 20)
