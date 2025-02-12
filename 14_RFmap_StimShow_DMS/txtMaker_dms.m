@@ -4,7 +4,7 @@ header_row = {'Condition', 'Frequency', 'Block', 'Timing File', 'TaskObject#1', 
 % Define the data rows
 data_rows = cell(10, length(header_row));
 fix = [0 0];
-rf = [-9 -4];
+rf = [-7 -3];
 pxperdeg = 36.039;
 img_size = [10 10]*pxperdeg;
 target_im_size = [10 10]*pxperdeg;
@@ -15,7 +15,8 @@ loc_2 = [10 0];%[6 0];
 %levels = [0 6 20 37 49 90];%Used after sept 16, 2024
 %levels = [0 6 20 37 49 90 101];%Used after Nov 6, 2024 ONLY TRIED ONE DAY
 %AND NOT GOOD
-levels = [0 6 20 37 49 90];
+levels = [0 6 20 37 49 90]; % This is for noise level used since sept 2024- Feb 2025 for Arya
+%levels = [0 3 24 60 80 96 100]; % This is for contrast level used for Arya 12 Feb 2025
 
 num_levels = length(levels)*2;
 size_set = num_levels*2;
