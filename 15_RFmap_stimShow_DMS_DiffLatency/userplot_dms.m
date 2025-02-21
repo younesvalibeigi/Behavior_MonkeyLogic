@@ -6,9 +6,13 @@ function cond_no = userplot_dms(TrialRecord, MLConfig)
     %num_levels = 6;
     %num_sets = 3;
 
-    % This is the seeting for contrast level arya after feb 12,2025
+    % This is the seeting for contrast level arya after feb 12,2025 (It is not used)
+    %num_levels = 7;
+    %num_sets = 2;
+
+    % This is the setting for noise level (Manifold project-3 microstim sets)
     num_levels = 7;
-    num_sets = 2;
+    num_sets = 4; % 1 Control + 1 Microstim peak + 1 Microstim after peak + 1 microstim offset
 
     N=num_levels*4*num_sets;
     cond_set = 1:N;

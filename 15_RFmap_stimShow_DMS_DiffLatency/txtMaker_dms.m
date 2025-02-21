@@ -24,7 +24,7 @@ levels = [0 20 34 45 68 100 120]; % This is new noise level used since Feb 19,20
 
 num_levels = length(levels)*2;
 size_set = num_levels*2;
-num_set = 3;
+num_set = 4; %3;
 num_cond = size_set*num_set;%48;
 freq = 2;
 

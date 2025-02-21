@@ -1,5 +1,6 @@
 hotkey('q', 'escape_screen(); assignin(''caller'',''continue_'',false);');
-bhv_code(10,'Fix Cue',20,'Sample',30,'Delay',40,'Go',50,'Reward', 80, 'Microstimulation1',90, 'Microstimulation2');  % behavioral codes
+bhv_code(10,'Fix Cue',20,'Sample',30,'Delay',40,'Go',50,'Reward', ...
+    80, 'Microstimulation1',90, 'Microstimulation2', 95, 'Microstimulation3');  % behavioral codes
 
 % detect an available tracker
 if exist('eye_','var'), tracker = eye_;
@@ -30,6 +31,15 @@ wait_for_fix = 20000;
 initial_fix = 500;
 %sample_time = 300;% (Used for noise 2024-2025)    %500 (Used for contrast 2025);%1000;% 200 Pooya
 sample_time = 200; % Used since Feb 19,2025
+% Before Feb 20,2025 delays is assumed zero, the new procedure requires different delays
+% With this procedure, microstim delay in intan should be zero as it is
+% included here
+latency = 90; % This should be added to the microstim procedure
+delay_microstim1 = latency; % This has to be equal to the latency
+delay_microstim2 = latency+50; % After the first peak
+delay_microstim3 = latency + sample_time; % Offset
+
+
 delay = randi([250, 500]); %700; % random 200-500 ms --> saccade delay (monkey should  not predict time), super saccade
 max_reaction_time = 3000;
 hold_target_time = 800; % pooya 750 but not important, max for Arya
@@ -38,6 +48,28 @@ hold_target_time = 800; % pooya 750 but not important, max for Arya
 fix_radius = 1.9;%2;
 hold_radius = 2.5;
 choice_radius = 4;%2.3;
+
+% Information regarding number of sets, levels, and conditions
+num_levels = 7;
+num_sets = 1+3; % 1 Control + 3 Microstim
+num_conditions_perSet = num_levels*4;
+
+bhv_variable('wait_for_fix', wait_for_fix, ...,
+    'initial_fix', initial_fix, ...
+    'sample_time', sample_time, ...
+    'latency', latency, ...
+    'delay_microstim1', delay_microstim1, ...
+    'delay_microstim2', delay_microstim2, ...
+    'delay_microstim3', delay_microstim3, ...
+    'delay', delay, ...
+    'max_reaction_time', max_reaction_time, ...
+    'hold_target_time', hold_target_time, ...
+    'fix_radius', fix_radius, ...
+    'hold_radius', hold_radius, ...
+    'choice_radius', choice_radius, ...
+    'num_levels', num_levels, ...
+    'num_sets', num_sets, ...
+    'num_conditions_perSet', num_conditions_perSet);
 
 % We have used toggleobject() to present stimuli and eyejoytrack() to track
 % behavior.  This method is not very advantageous in creating dynamic,
@@ -104,20 +136,28 @@ scene2 = create_scene(wth2,[fixation_point sample]);
 % wthStim.WaitTime = 0;             % We already knows the fixation is acquired, so we don't wait.
 % wthStim.HoldTime = sample_time;
 % Microstimulation signal
-ttl = TTLOutput(wth2);
-ttl.Port = 1;  % TTL #1 must be assigned in the I/O menu
-tc = TimeCounter(ttl);
-tc.Duration = 100;
-sceneStim = create_scene(ttl, [fixation_point sample]);
+ttl1 = TTLOutput(wth2);
+ttl1.Port = 1;  % TTL #1 must be assigned in the I/O menu
+tc1 = TimeCounter(ttl1);
+tc1.Duration = 50; % I changed this from 100 to 50 to make it equal to microstim time
+tc1.Delay = delay_microstim1;
+sceneStim1 = create_scene(ttl, [fixation_point sample]);
 
 ttl2 = TTLOutput(wth2);
-ttl2.Port = 2;  % TTL #1 must be assigned in the I/O menu
+ttl2.Port = 1;  % TTL #1 must be assigned in the I/O menu Now they are all the same port
 tc2 = TimeCounter(ttl2);
-tc2.Duration = 100;
+tc2.Duration =  50; % I changed this from 100 to 50 to make it equal to microstim time
+tc2.Delay = delay_microstim2;
 sceneStim2 = create_scene(ttl2, [fixation_point sample]);
 %run_scene(scene);
 %sceneStim = create_scene(wthStim,[fixation_point sample]);
 %scene2 = create_scene(wth2,fixation_point);
+ttl3 = TTLOutput(wth2);
+ttl3.Port = 1;  % TTL #1 must be assigned in the I/O menu
+tc3 = TimeCounter(ttl3);
+tc3.Duration =  50; % I changed this from 100 to 50 to make it equal to microstim time
+tc3.Delay = delay_microstim3;
+sceneStim3 = create_scene(ttl3, [fixation_point sample]);
 
 
 % scene 3: delay
@@ -166,10 +206,12 @@ if 0==error_type
     
     % run_scene(scene2,20);    % Run the second scene (eventmarker 20) % No stimulation
     % Microstimulation
-    if TrialRecord.CurrentCondition >= 57%49
+    if TrialRecord.CurrentCondition >= 3*num_conditions_perSet+1
+        run_scene(sceneStim3, 95);
+    elseif TrialRecord.CurrentCondition >= 2*num_conditions_perSet+1  %57%49
         run_scene(sceneStim2, 90);
-    elseif TrialRecord.CurrentCondition >= 29%25
-        run_scene(sceneStim, 80);
+    elseif TrialRecord.CurrentCondition >= num_conditions_perSet+1  %29%25
+        run_scene(sceneStim1, 80);
     else
         run_scene(scene2,20);    % Run the second scene (eventmarker 20)
     end
