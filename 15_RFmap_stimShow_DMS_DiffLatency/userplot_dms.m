@@ -69,7 +69,7 @@ function cond_no = userplot_dms(TrialRecord, MLConfig)
 %         title('Performance Plot');
 %     end
     
-    color = {'k-o', 'b-o', 'r-o', 'y-o', 'g-o'};    
+    color = {'k-o', 'b-o', 'r-o', 'g-o', 'y-o'};    
     dipslayName_arr = {'Ctrl', 'Mrstm1', 'Mrstm2', 'Mrstm3', 'Mrstm4'}; 
        
     for i_set=1:num_sets

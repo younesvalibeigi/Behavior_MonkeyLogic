@@ -1,6 +1,6 @@
 hotkey('q', 'escape_screen(); assignin(''caller'',''continue_'',false);');
 bhv_code(10,'Fix Cue',20,'Sample',30,'Delay',40,'Go',50,'Reward', ...
-    80, 'Microstimulation1',90, 'Microstimulation2', 95, 'Microstimulation3');  % behavioral codes
+    21, 'Microstimulation1',22, 'Microstimulation2', 23, 'Microstimulation3');  % behavioral codes
 
 % detect an available tracker
 if exist('eye_','var'), tracker = eye_;
@@ -34,7 +34,7 @@ sample_time = 200; % Used since Feb 19,2025
 % Before Feb 20,2025 delays is assumed zero, the new procedure requires different delays
 % With this procedure, microstim delay in intan should be zero as it is
 % included here
-latency = 90; % This should be added to the microstim procedure
+latency = 100; % This should be added to the microstim procedure
 delay_microstim1 = latency; % This has to be equal to the latency
 delay_microstim2 = latency+50; % After the first peak
 delay_microstim3 = latency + sample_time; % Offset
@@ -117,48 +117,93 @@ wth1.HoldTime = initial_fix;   % Since WaitThenHold gets the fixation status fro
 scene1 = create_scene(wth1,fixation_point);  % In this scene, we will present the fixation_point (TaskObject #1)
                                              % and wait for fixation.
 
+
+
 % scene 2: sample
-fix2 = SingleTarget(tracker);
+if TrialRecord.CurrentCondition < 1*num_conditions_perSet +1
+    ttl = TTLOutput(tracker);
+    ttl.Port = 3;
+    ttl.Duration = 10;
+    sample_eventmaker = 20;
+    %ttl.Delay = [ttl_delay 0];
+    %wth2 = WaitThenHold(fix2);
+    
+else 
+    if TrialRecord.CurrentCondition < 2*num_conditions_perSet+1
+        ttl_delay = delay_microstim1;
+        sample_eventmaker = 21;
+    elseif TrialRecord.CurrentCondition < 3*num_conditions_perSet+1
+        ttl_delay = delay_microstim2;
+        sample_eventmaker = 22;
+    else
+        ttl_delay = delay_microstim3;
+        sample_eventmaker = 23;
+    end
+    ttl = TTLOutput(tracker);
+    ttl.Port = [1 3];
+    ttl.Duration = [10 10];
+    ttl.Delay = [ttl_delay 0];
+    %wth2 = WaitThenHold(fix2);
+    %wth2 = WaitThenHold(ttl);
+end
+fix2 = SingleTarget(ttl);
 fix2.Target = fixation_point;%sample;
 fix2.Threshold = fix_radius;%hold_radius;
 wth2 = WaitThenHold(fix2);
 wth2.WaitTime = 0;             % We already knows the fixation is acquired, so we don't wait.
 wth2.HoldTime = sample_time;
 scene2 = create_scene(wth2,[fixation_point sample]);
-%scene2 = create_scene(wth2,fixation_point);
+%ttlGeneral = TTLOutput(wth2);
+%ttlGeneral.Port = 3;  % TTL #1 must be assigned in the I/O menu
+%scene2_ttl = create_scene(ttlGeneral,[fixation_point sample]);
+
+% scene 2: sample with microstim 1
+% fix2_m1 = SingleTarget(tracker);
+% fix2_m1.Target = fixation_point;%sample;
+% fix2_m1.Threshold = fix_radius;%hold_radius;
+% wth2_m1 = WaitThenHold(fix2_m1);
+% wth2_m1.WaitTime = 0;             % We already knows the fixation is acquired, so we don't wait.
+% wth2_m1.HoldTime = sample_time;
+% ttl_m1 = TTLOutput(wth2_m1);
+% ttl_m1.Port = [1 3];  % TTL #1 must be assigned in the I/O menu
+% scene2_microstim1 = create_scene(ttl_m1,[fixation_point sample]);
+
+
+% scene 2: sample with microstim 2
+% fix2_m2 = SingleTarget(tracker);
+% fix2_m2.Target = fixation_point;%sample;
+% fix2_m2.Threshold = fix_radius;%hold_radius;
+% wth2_m2 = WaitThenHold(fix2_m2);
+% wth2_m2.WaitTime = 0;             % We already knows the fixation is acquired, so we don't wait.
+% wth2_m2.HoldTime = sample_time; % delay_microstim2=50
+% ttl_m2 = TTLOutput(wth2_m2);
+% ttl_m2.Port = [1 3];  % TTL #1 must be assigned in the I/O menu
+% ttl_m2.Duration = [10 10];
+% ttl_m2.Delay = [50 1];
+% %ttl_m2.Delay = [50 0];
+% scene2_microstim2 = create_scene(ttl_m2,[fixation_point sample]);
+
+
 
 
 % scene 2 with Microstimulation: sample
-% fixStim = SingleTarget(tracker);
-% fixStim.Target = fixation_point;%sample;
-% fixStim.Threshold = fix_radius;%hold_radius;
-% wthStim = WaitThenHold(fixStim);
-% wthStim.WaitTime = 0;             % We already knows the fixation is acquired, so we don't wait.
-% wthStim.HoldTime = sample_time;
-% Microstimulation signal
-ttl1 = TTLOutput(wth2);
-ttl1.Port = 1;  % TTL #1 must be assigned in the I/O menu
-tc1 = TimeCounter(ttl1);
-tc1.Duration = 50; % I changed this from 100 to 50 to make it equal to microstim time
-tc1.Delay = delay_microstim1;
-sceneStim1 = create_scene(ttl, [fixation_point sample]);
-
-ttl2 = TTLOutput(wth2);
-ttl2.Port = 1;  % TTL #1 must be assigned in the I/O menu Now they are all the same port
-tc2 = TimeCounter(ttl2);
-tc2.Duration =  50; % I changed this from 100 to 50 to make it equal to microstim time
-tc2.Delay = delay_microstim2;
-sceneStim2 = create_scene(ttl2, [fixation_point sample]);
+% ttl1 = TTLOutput(wth2);
+% ttl1.Port = 1;  % TTL #1 must be assigned in the I/O menu
+% sceneStim1 = create_scene(ttl1, [fixation_point sample]);
+% 
+% 
+% 
+% ttl2 = TTLOutput(wth2);
+% ttl2.Port = 2;  % TTL #1 must be assigned in the I/O menu Now they are all the same port
+% sceneStim2 = create_scene(ttl2, [fixation_point sample]);
 %run_scene(scene);
 %sceneStim = create_scene(wthStim,[fixation_point sample]);
 %scene2 = create_scene(wth2,fixation_point);
-ttl3 = TTLOutput(wth2);
-ttl3.Port = 1;  % TTL #1 must be assigned in the I/O menu
-tc3 = TimeCounter(ttl3);
-tc3.Duration =  50; % I changed this from 100 to 50 to make it equal to microstim time
-tc3.Delay = delay_microstim3;
-sceneStim3 = create_scene(ttl3, [fixation_point sample]);
 
+% ttl3 = TTLOutput(wth2);
+% ttl3.Port = 3;  % TTL #1 must be assigned in the I/O menu
+% sceneStim3 = create_scene(ttl3, [fixation_point sample]);
+%scene3OffsetStim3 = create_scene(ttl3, fixation_point);
 
 % scene 3: delay
 fix3 = SingleTarget(tracker);
@@ -168,6 +213,10 @@ wth3 = WaitThenHold(fix3);
 wth3.WaitTime = 0;
 wth3.HoldTime = delay;
 scene3 = create_scene(wth3,fixation_point);
+
+
+
+
 
 % scene 4: choice
 mul4 = MultiTarget(tracker);        % The MultiTarget adapter checks fixation acquisition for multiple targets.
@@ -202,26 +251,17 @@ if ~wth1.Success             % If the WithThenHold failed (either fixation is no
 end
 
 if 0==error_type
-    %run_scene(scene2,20);    % Run the second scene (eventmarker 20)
-    
-    % run_scene(scene2,20);    % Run the second scene (eventmarker 20) % No stimulation
-    % Microstimulation
-    if TrialRecord.CurrentCondition >= 3*num_conditions_perSet+1
-        run_scene(sceneStim3, 95);
-    elseif TrialRecord.CurrentCondition >= 2*num_conditions_perSet+1  %57%49
-        run_scene(sceneStim2, 90);
-    elseif TrialRecord.CurrentCondition >= num_conditions_perSet+1  %29%25
-        run_scene(sceneStim1, 80);
-    else
-        run_scene(scene2,20);    % Run the second scene (eventmarker 20)
-    end
-    if ~wth2.Success         % The failure of WithThenHold indicates that the subject didn't maintain fixation on the sample image.
+    run_scene(scene2,sample_eventmaker);    % Run the second scene (eventmarker Control:20, microstim1:21, microstim2:22, microstim3:23) 
+
+    if ~wth2.Success %&& ~wth2_m1.Success && ~wth2_m2.Success        % The failure of WithThenHold indicates that the subject didn't maintain fixation on the sample image.
         error_type = 3;      % So it is a "break fixation (3)" error.
     end
 end
 
 if 0==error_type
+    
     run_scene(scene3,30);    % Run the third (delay) scene (eventmarker 30)
+    
     if ~wth3.Success
         error_type = 4;%3;      % break fixation (3)
     end
