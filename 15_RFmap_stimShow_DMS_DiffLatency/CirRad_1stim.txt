@@ -1,8 +1,8 @@
 Condition	Frequency	Block	Timing File	TaskObject#1	TaskObject#2
-1	1	1	stimulus_show1img	fix(0.00,0.00)	pic(cir0.png,-4.00,-1.00,342.37,342.37)
-2	1	1	stimulus_show1img	fix(0.00,0.00)	pic(cir0.png,-4.00,-1.00,342.37,342.37)
-3	1	1	stimulus_show1img	fix(0.00,0.00)	pic(rad0.png,-4.00,-1.00,342.37,342.37)
-4	1	1	stimulus_show1img	fix(0.00,0.00)	pic(rad0.png,-4.00,-1.00,342.37,342.37)
+1	1	1	stimulus_show1img	fix(0.00,0.00)	pic(cir0.png,-4.00,-3.00,342.37,342.37)
+2	1	1	stimulus_show1img	fix(0.00,0.00)	pic(cir0.png,-4.00,-3.00,342.37,342.37)
+3	1	1	stimulus_show1img	fix(0.00,0.00)	pic(rad0.png,-4.00,-3.00,342.37,342.37)
+4	1	1	stimulus_show1img	fix(0.00,0.00)	pic(rad0.png,-4.00,-3.00,342.37,342.37)
 					
 					
 					
