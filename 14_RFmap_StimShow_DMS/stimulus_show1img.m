@@ -16,7 +16,7 @@ fix_rad = 1.7;
 delay = 200;
 reward = 60; % if reward = 30 & reward-duration = 20 then each reward transfer 0.0411 ml water
 reward_interval = 25;
-stim_time = 300;
+stim_time = 200;
 
 
 prbe_stim_matrix = [2 2 2 2 2]';

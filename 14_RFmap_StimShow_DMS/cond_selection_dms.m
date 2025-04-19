@@ -6,12 +6,12 @@ function cond_no = cond_selection_dms(TrialRecord, MLConfig)
     
     % This is the setting for noise level, Arya, before sept2024-Feb2025
     % before feb 12, 2025
-    %num_levels = 6;
-    %num_sets = 3;
+    num_levels = 6;
+    num_sets = 3;
 
     % This is the seeting for contrast level arya after feb 12,2025
-    num_levels = 7;
-    num_sets = 2;
+    %num_levels = 7;
+    %num_sets = 2;
 
     N=num_levels*4*num_sets;
     %N=72;

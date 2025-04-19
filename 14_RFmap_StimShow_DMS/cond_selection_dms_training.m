@@ -6,7 +6,7 @@ function cond_no = cond_selection_dms_training(TrialRecord, MLConfig)
     %N=4*6;
     
     % This is the seeting for contrast level arya after feb 12,2025
-    num_levels = 7;
+    num_levels = 6;%7;
     %num_sets = 2;
     N=4*num_levels;
 

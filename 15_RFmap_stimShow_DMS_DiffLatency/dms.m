@@ -37,7 +37,7 @@ sample_time = 200; % Used since Feb 19,2025
 latency = 100; % This should be added to the microstim procedure
 delay_microstim1 = latency; % This has to be equal to the latency
 delay_microstim2 = latency+50; % After the first peak
-delay_microstim3 = latency + sample_time + 20; % Offset
+delay_microstim3 = latency + sample_time; % Offset
 
 
 delay = randi([250, 500]); %700; % random 200-500 ms --> saccade delay (monkey should  not predict time), super saccade
