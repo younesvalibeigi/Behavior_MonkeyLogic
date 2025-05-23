@@ -34,10 +34,10 @@ sample_time = 200; % Used since Feb 19,2025
 % Before Feb 20,2025 delays is assumed zero, the new procedure requires different delays
 % With this procedure, microstim delay in intan should be zero as it is
 % included here
-latency = 100; % This should be added to the microstim procedure
-delay_microstim1 = latency; % This has to be equal to the latency
-delay_microstim2 = latency+50; % After the first peak
-delay_microstim3 = latency + sample_time; % Offset
+latency = 0; % This should be added to the microstim procedure
+delay_microstim1 = 0;%latency; % This has to be equal to the latency
+delay_microstim2 = 0;%latency+50; % After the first peak
+delay_microstim3 = 0;%latency + sample_time; % Offset
 
 
 delay = randi([250, 500]); %700; % random 200-500 ms --> saccade delay (monkey should  not predict time), super saccade
@@ -47,11 +47,11 @@ hold_target_time = 800; % pooya 750 but not important, max for Arya
 % fixation window (in degrees):
 fix_radius = 1.9;%2;
 hold_radius = 2.5;
-choice_radius = 4;%2.3;
+choice_radius = 3;%2.3;
 
 % Information regarding number of sets, levels, and conditions
 num_levels = 7;
-num_sets = 1+3; % 1 Control + 3 Microstim
+num_sets = 1+2; % 1 Control + 2 Microstim
 num_conditions_perSet = num_levels*4;
 
 bhv_variable('wait_for_fix', wait_for_fix, ...,
@@ -132,15 +132,17 @@ else
     if TrialRecord.CurrentCondition < 2*num_conditions_perSet+1
         ttl_delay = delay_microstim1;
         sample_eventmaker = 21;
+        ttl_port = 1;
     elseif TrialRecord.CurrentCondition < 3*num_conditions_perSet+1
         ttl_delay = delay_microstim2;
         sample_eventmaker = 22;
-    else
-        ttl_delay = delay_microstim3;
-        sample_eventmaker = 23;
+        ttl_port = 2;
+%     else
+%         ttl_delay = delay_microstim3;
+%         sample_eventmaker = 23;
     end
     ttl = TTLOutput(tracker);
-    ttl.Port = [1 3];
+    ttl.Port = [ttl_port 3];
     ttl.Duration = [10 10];
     ttl.Delay = [ttl_delay 0];
     %wth2 = WaitThenHold(fix2);

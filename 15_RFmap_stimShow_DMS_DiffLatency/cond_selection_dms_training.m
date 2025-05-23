@@ -51,7 +51,7 @@ function cond_no = cond_selection_dms_training(TrialRecord, MLConfig)
         
         
         for i=1:N/4
-            if performance_ratio(i)>1.5 % bias toward cir
+            if performance_ratio(i)>1.25%1.5 % bias toward cir
                 if performance_ratio(i)>2 % more bias toward cir
                     theRatio = performance_ratio(i)*2;
                     %cir

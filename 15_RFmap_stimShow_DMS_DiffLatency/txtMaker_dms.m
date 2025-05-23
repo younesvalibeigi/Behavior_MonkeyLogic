@@ -4,10 +4,10 @@ header_row = {'Condition', 'Frequency', 'Block', 'Timing File', 'TaskObject#1', 
 % Define the data rows
 data_rows = cell(10, length(header_row));
 fix = [0 0];
-rf = [-7 -4];
+rf = [-6 -3];
 pxperdeg = 36.039;
-img_size = [10 10]*pxperdeg;
-target_im_size = [10 10]*pxperdeg;
+img_size = [6 6]*pxperdeg;
+target_im_size = [6 6]*pxperdeg;
 loc_1 = [-10 0];%[-6 0];
 loc_2 = [10 0];%[6 0];
 
@@ -18,13 +18,17 @@ loc_2 = [10 0];%[6 0];
 %levels = [0 6 20 37 49 90]; % This is for noise level used since sept 2024- Feb 2025 for Arya
 %levels = [0 3 24 60 80 96 100]; % This is for contrast level used for Arya 12 Feb 2025
 %levels = [0 6 20 37 49 90 120]; % This is new noise level used since Feb 18,2025
-levels = [0 20 34 45 68 100 120]; % This is new noise level used since Feb 19,2025
+%levels = [0 20 34 45 68 100 120]; % This is new noise level used since Feb 19,2025
 %        100 16 7 3.5 1.1 0.2 0       
-
-
+%levels = [0 34 45 68 80 100 120]; % This is new noise level used since Feb 19,2025
+%        100 7 3.5 1.1 0.6 0.2 0
+levels = [0 6 17 31 47 69 120]; % 
+%       100 41 20 8.3 3 1 0
+levels = [0 6 17 31 39 47 120]; % 
+%       100 41 20 8.3 5 3 0
 num_levels = length(levels)*2;
 size_set = num_levels*2;
-num_set = 4; %3;
+num_set = 3; %4;
 num_cond = size_set*num_set;%48;
 freq = 2;
 

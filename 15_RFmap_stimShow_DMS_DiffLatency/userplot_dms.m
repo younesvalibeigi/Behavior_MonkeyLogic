@@ -11,6 +11,13 @@ function cond_no = userplot_dms(TrialRecord, MLConfig)
     %num_sets = 2;
 
     % This is the setting for noise level (Manifold project-3 microstim sets)
+    %levels = [0 6 17 31 47 69 120];       
+    %SNR_values = [100 41 20 8.3 3 1 0.001];
+    levels = [0 6 17 31 39 47 120]; % 
+    SNR_values = [100 41 20 8.3 5 3 0.001];
+    SNR_values = [-SNR_values flip(SNR_values)];
+    SNR_values_transfomred = sign(SNR_values) .* (log10(1+abs(SNR_values)));
+
     num_levels = 7;
     num_sets = 4; % 1 Control + 1 Microstim peak + 1 Microstim after peak + 1 microstim offset
 
@@ -71,16 +78,23 @@ function cond_no = userplot_dms(TrialRecord, MLConfig)
     
     color = {'k-o', 'b-o', 'r-o', 'g-o', 'y-o'};    
     dipslayName_arr = {'Ctrl', 'Mrstm1', 'Mrstm2', 'Mrstm3', 'Mrstm4'}; 
-       
     for i_set=1:num_sets
         start_i = (i_set-1)*num_levels+1;
         end_i = (i_set-1)*num_levels+num_levels;
         disp_performance = [(1-performance(1,start_i:end_i)) flip(performance(2,start_i:end_i))];
         if i_set==1
-            plot(disp_performance, color{i_set}, 'DisplayName', dipslayName_arr{i_set})
+            plot(SNR_values_transfomred, disp_performance, color{i_set}, 'DisplayName', dipslayName_arr{i_set})
+            %xticks = SNR_values_transfomred;
+            %xticklabels = num2cell(round(SNR_values),1);
+            %set(gca, 'XTick', xticks, 'XTickLabel', xticklabels);
         else
-            hold on, plot(disp_performance, color{i_set}, 'DisplayName', dipslayName_arr{i_set}), hold off;
+            hold on, plot(SNR_values_transfomred, disp_performance, color{i_set}, 'DisplayName', dipslayName_arr{i_set}), 
+            %xticks = SNR_values_transfomred;
+            %xticklabels = num2cell(round(SNR_values),1);
+            %set(gca, 'XTick', xticks, 'XTickLabel', xticklabels);
+            hold off;
         end
+        xlim([-2.005 2.005]);
         xlabel('cir-rad');
         ylabel('radial response');
         title('Performance Plot');
