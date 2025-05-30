@@ -13,8 +13,10 @@ function cond_no = userplot_dms(TrialRecord, MLConfig)
     % This is the setting for noise level (Manifold project-3 microstim sets)
     %levels = [0 6 17 31 47 69 120];       
     %SNR_values = [100 41 20 8.3 3 1 0.001];
-    levels = [0 6 17 31 39 47 120]; % 
-    SNR_values = [100 41 20 8.3 5 3 0.001];
+    %levels = [0 6 17 31 39 47 120]; % 
+    %SNR_values = [100 41 20 8.3 5 3 0.001];
+    levels = [0 6 17 31 47 69 120]; % 
+    SNR_values = [100 41 20 8.3 3 1 0.001];
     SNR_values = [-SNR_values flip(SNR_values)];
     SNR_values_transfomred = sign(SNR_values) .* (log10(1+abs(SNR_values)));
 

@@ -4,7 +4,7 @@ header_row = {'Condition', 'Frequency', 'Block', 'Timing File', 'TaskObject#1', 
 % Define the data rows
 data_rows = cell(10, length(header_row));
 fix = [0 0];
-rf = [-6 -3];
+rf = [-7 -4];
 pxperdeg = 36.039;
 img_size = [6 6]*pxperdeg;
 target_im_size = [6 6]*pxperdeg;
@@ -22,10 +22,12 @@ loc_2 = [10 0];%[6 0];
 %        100 16 7 3.5 1.1 0.2 0       
 %levels = [0 34 45 68 80 100 120]; % This is new noise level used since Feb 19,2025
 %        100 7 3.5 1.1 0.6 0.2 0
-levels = [0 6 17 31 47 69 120]; % 
+%levels = [0 6 17 31 47 69 120]; % 
 %       100 41 20 8.3 3 1 0
 levels = [0 6 17 31 39 47 120]; % 
 %       100 41 20 8.3 5 3 0
+levels = [0 6 17 31 47 69 120]; % 
+%       100 41 20 8.3 3 1 0
 num_levels = length(levels)*2;
 size_set = num_levels*2;
 num_set = 3; %4;

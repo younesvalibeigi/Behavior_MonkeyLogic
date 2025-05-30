@@ -15,7 +15,7 @@ function cond_no = cond_selection_dms(TrialRecord, MLConfig)
 
     % This is the setting for noise level (Manifold project-3 microstim sets)
     num_levels = 7;
-    num_sets = 1;%4; % 1 Control + 1 Microstim peak + 1 Microstim after peak + 1 microstim offset
+    num_sets = 3;%4; % 1 Control + 1 Microstim peak + 1 Microstim after peak + 1 microstim offset
 
     N=num_levels*4*num_sets;
     %N=72;
