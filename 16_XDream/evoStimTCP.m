@@ -78,19 +78,17 @@ for k = 1:N
     % Present fixation + the k-th image
     stim_scenes{k} = create_scene(wthK, [fixation_point prob_stimulus(k)]);
     
-    % OFF period scene (no image) between stimuli, except after the 10th
-    if k < N
-        fixD = SingleTarget(tracker);
-        fixD.Target    = fixation_point;
-        fixD.Threshold = hold_radius;
+    % OFF period scene (no image) after stimuli
+    fixD = SingleTarget(tracker);
+    fixD.Target    = fixation_point;
+    fixD.Threshold = hold_radius;
 
-        wthD = WaitThenHold(fixD);
-        wthD.WaitTime = 0;
-        wthD.HoldTime = delay_time;  % 100 ms OFF while holding fixation
-        delay_wth{k}  = wthD;
+    wthD = WaitThenHold(fixD);
+    wthD.WaitTime = 0;
+    wthD.HoldTime = delay_time;  % 100 ms OFF while holding fixation
+    delay_wth{k}  = wthD;
 
-        delay_scenes{k} = create_scene(wthD, fixation_point);
-    end
+    delay_scenes{k} = create_scene(wthD, fixation_point);
 end
 
 % ===================== TASK =====================
@@ -104,27 +102,34 @@ if ~wth0.Success
 end
 
 % Stimulus train: 10 images with 100 ms ON & 100 ms OFF
+num_TTL = 0;
 if 0==error_type
     for k = 1:N
         % Unique event code per image: 21..30
         img_event = 20 + k;
         run_scene(stim_scenes{k}, img_event);
+        % keep track of number of images shown
+        num_TTL = num_TTL +1;
 
         if ~stim_wth{k}.Success
             error_type = 3;   % broke fixation during stimulus
+            bhv_variable('num_TTL', num_TTL);
+            TrialRecord.User.num_TTL = num_TTL;
             break
         end
-
-        % OFF (no last delay)
-        if k < N
-            run_scene(delay_scenes{k}, delay_eventmarker);
-            if ~delay_wth{k}.Success
-                error_type = 4;  % broke fixation during OFF
-                break
-            end
+        % The delay period
+        run_scene(delay_scenes{k}, delay_eventmarker);
+        if ~delay_wth{k}.Success
+            error_type = 4;  % broke fixation during OFF
+            bhv_variable('num_TTL', num_TTL);
+            TrialRecord.User.num_TTL = num_TTL;
+            break
         end
+        
     end
 end
+bhv_variable('num_TTL', num_TTL);
+TrialRecord.User.num_TTL = num_TTL;
 
 % Reward & end
 idle(0);  % clear screen
@@ -135,4 +140,4 @@ else
 end
 
 trialerror(error_type);
-set_iti( (error_type==0) * 50 + (error_type~=0) * 500 );
+set_iti( (error_type==0) * 10 + (error_type~=0) * 500 );

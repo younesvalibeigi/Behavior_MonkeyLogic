@@ -19,6 +19,12 @@ if isempty(timing_filename_returned)
     return
 end
 
+% ============== Visual stimulus properties ==============
+fix = [0 0];
+img_loc = [-5.5 -0];
+pxperdeg = 36.039;
+img_size = [10 10]*pxperdeg;
+
 % =================== Design constants ===================
 IMGS_PER_BLOCK = 40;                 % 4 conditions × 10 images
 IMGS_PER_COND  = 10;
@@ -28,7 +34,7 @@ MAX_BLOCKS     = 5;
 % ===== FR SERVER (client) =====
 fr_server_ip   = '10.68.14.209';
 fr_server_port = 6010;              % matches your server
-fr_chan        = 31;                % electrode index 0..31  (row = fr_chan+1)
+fr_chan        = 0;                % electrode index 0..31  (row = fr_chan+1)
 
 % ===== AlexNet (kept for reference; now commented) =====
 % alex_layer         = 'fc6';
@@ -90,28 +96,22 @@ if isempty(init_done)
         if isfield(S,'NAMES') && iscell(S.NAMES) && numel(S.NAMES) >= IMGS_PER_BLOCK
             idx_names      = 1:IMGS_PER_BLOCK;
             names_block_in = S.NAMES(idx_names);
+
             [block_image_names, block_cond_names] = build_block_from_names(names_block_in, OUT_DIR, OUT_DIR_REL, N_COND, IMGS_PER_COND, 1);
             use_names_firstblock = true;
+            % === tie codes_block to the EXACT rows that fed names_block_in ===
+            codes_mat = [];
+            if isfield(S,'codes'), codes_mat = S.codes; end       % your generator saved 'codes'
+            
+            codes_block = double(codes_mat(idx_names,:));   % <-- first 40 rows aligned to NAMES
+            %disp(size(codes_block))
+            
         end
-        % possible CODES for later blocks
-        if isfield(S,'CODES') && size(S.CODES,2)==4096
-            if size(S.CODES,1) >= IMGS_PER_BLOCK
-                codes_block = double(S.CODES(1:IMGS_PER_BLOCK,:));
-            else
-                idx = randi(size(S.CODES,1),[IMGS_PER_BLOCK 1]);
-                codes_block = double(S.CODES(idx,:));
-            end
-        end
+        
     end
 
     if ~use_names_firstblock
-        if isempty(codes_block)
-            rng('shuffle');
-            codes_block = normrnd(0,0.8,[IMGS_PER_BLOCK,4096]);
-        end
-        if isempty(G)
-            error('No NAMES for block 1 and no generator available.');
-        end
+        
         [block_image_names, block_cond_names] = build_block_images(G, codes_block, OUT_DIR, OUT_DIR_REL, N_COND, IMGS_PER_COND, 1);
     end
 
@@ -128,7 +128,7 @@ if isempty(init_done)
     names_all = {};
 
     % --- per-block bookkeeping init ---
-    block_trial_log = struct('cond_idx', {}, 'err_code', {}, 'had_ttl', {});
+    block_trial_log = struct('cond_idx', {}, 'err_code', {}, 'had_ttl', {}, 'ttl_count', {});
     ttl_trial_positions = [];
     last_logged_trial_count = 0;
     last_returned_cond_idx = []; % we will set it when we output C below
@@ -146,6 +146,7 @@ if ntr_done > last_logged_trial_count
     % there might be >1 new (rare); handle all new ones
     for tr = (last_logged_trial_count+1) : ntr_done
         err_code = TrialRecord.TrialErrors(tr);
+        
         % We rely on last_returned_cond_idx from the moment we prepared that trial
         if isempty(last_returned_cond_idx)
             % should not happen after first actual trial, but guard anyway
@@ -162,6 +163,12 @@ if ntr_done > last_logged_trial_count
         if had_ttl
             ttl_trial_positions(end+1) = numel(block_trial_log); %#ok<SAGROW>
         end
+
+        ttl_count = double(TrialRecord.User.num_TTL);
+        disp(ttl_count)
+        block_trial_log(end).ttl_count = ttl_count;
+
+
     end
     last_logged_trial_count = ntr_done;
 end
@@ -180,70 +187,63 @@ if cond_ptr > N_COND
     % --- 1) Pull FR matrix for this block from server ---
     [FR, rows, cols] = pull_FR_matrix(fr_server_ip, fr_server_port);
     
-    % number of TTL trials in our bookkeeping for this block
-    n_ttl = numel(ttl_trial_positions);
+    % ---- Align FR columns to TTLs using per-trial ttl_count ----
+    % Build a 1D vector whose length is the total # of TTLs observed in the block.
+    % Each entry is the trial error code for the TTL at that time.
+    err_per_ttl       = [];   % e.g., [0 0 0 ... 3 3 3 ... 0 0 ...]
+    cond_idx_per_ttl  = [];   % parallel vector telling which condition each TTL came from
+    for k = 1:numel(block_trial_log)
+        if block_trial_log(k).had_ttl
+            n = double(block_trial_log(k).ttl_count);
+            if n > 0
+                err_per_ttl      = [err_per_ttl,      repmat(block_trial_log(k).err_code, 1, n)]; %#ok<AGROW>
+                cond_idx_per_ttl = [cond_idx_per_ttl, repmat(block_trial_log(k).cond_idx, 1, n)]; %#ok<AGROW>
+            end
+        end
+    end
 
-    % Sanity check & align counts
+    % Sanity checks (rows, columns)
     if rows ~= 32
-        error('FR rows=%d (expected 32). Proceeding with min.', rows);
+        error('FR rows=%d (expected 32).', rows);
     end
-    if cols ~= n_ttl
-        error('FR cols=%d but TTL trials=%d; truncating to min.', cols, n_ttl);
-    end
-    K = min(cols, n_ttl);     % number of usable TTL trials
-    ttl_trial_positions = ttl_trial_positions(1:K);
-    FR = FR(1:min(rows,32), 1:K);
-
-    % --- 2) Select only success trials (error==0) among TTL trials, preserving order ---
-    ttl_errs = arrayfun(@(p) block_trial_log(p).err_code, ttl_trial_positions);
-    success_mask = (ttl_errs == 0);
-    success_positions = ttl_trial_positions(success_mask);
-
-    % Expect exactly N_COND successes per completed block
-    if numel(success_positions) ~= N_COND
-        error('Expected %d successful TTL trials but got %d. Proceeding with available successes.', ...
-                 N_COND, numel(success_positions));
+    if numel(err_per_ttl) ~= cols
+        error('Mismatch: FR cols=%d but per-TTL error vector has length %d.', cols, numel(err_per_ttl));
     end
 
-    % For each TTL trial, find its TTL column index (1..K)
-    ttl_cols = 1:K; ttl_cols = ttl_cols(:);
-    success_cols = ttl_cols(success_mask);  % columns in FR for success trials (chronological)
+    % Keep only TTLs from successful trials (error==0)
+    keep_mask    = (err_per_ttl == 0);
+    FR_ok        = FR(1:32, keep_mask);           % 32 x (#TTL from successful trials)
+    cond_ok      = cond_idx_per_ttl(keep_mask);   % 1 x (#TTL from successful trials)
 
-    % --- 3) Build 40-length scores vector from FR channel on success trials ---
-    scores = nan(IMGS_PER_BLOCK,1);
+    % Expectation (complete block): 4 successful trials × 10 TTL each = 40 kept TTLs
+    n_ok = size(FR_ok, 2);
+    if n_ok ~= IMGS_PER_BLOCK
+        error('Expected %d TTLs from successful trials, but got %d. Proceeding with available TTLs.', IMGS_PER_BLOCK, n_ok);
+    end
+
+    % --- 3) Build 40-length score vector from the kept TTLs ---
+    % We assume each successful trial for a condition yields exactly 10 TTLs,
+    % in the order the 10 images were shown for that condition.
+    scores = nan(IMGS_PER_BLOCK, 1);
 
     % Which FR row to use
     fr_row = fr_chan + 1;
-    fr_row = max(1, min(32, fr_row));
+    % fr_row = max(1, min(32, fr_row)); % make sure it is in the boundry
 
-    % For each successful trial, map its FR to its 10 images
-    for si = 1:numel(success_positions)
-        pos_in_log = success_positions(si);
-        this_cond  = block_trial_log(pos_in_log).cond_idx;
-        col_in_FR  = success_cols(si);
-
-        % bounds
-        if fr_row <= size(FR,1) && col_in_FR <= size(FR,2)
-            fr_val = FR(fr_row, col_in_FR);
-        else
-            fr_val = NaN;
+   % For each condition 1..N_COND, find its TTLs (should be 10) in chronological order
+    for cond = 1:N_COND
+        idx = find(cond_ok == cond);  % TTL indices belonging to this condition
+        if isempty(idx)
+            % no successful trial for this condition in this block; leave NaNs for now
+            continue
         end
+        % Use at most IMGS_PER_COND = 10 TTLs (in case of any extra)
+        take = idx(1:min(IMGS_PER_COND, numel(idx)));
+        vals = FR_ok(fr_row, take);
 
-        % the 10 images corresponding to this condition in the CURRENT block
-        img_lin_idx = ((this_cond-1)*IMGS_PER_COND + (1:IMGS_PER_COND));
-        scores(img_lin_idx) = fr_val;
-    end
-
-    % Fill any remaining NaNs (e.g., if fewer successes than 4) with a conservative baseline
-    if any(isnan(scores))
-        % choose a small penalty value (e.g., min of present FRs or 0)
-        present = scores(~isnan(scores));
-        if isempty(present)
-            fillv = 0;
-        else
-            fillv = min(present);
-        end
-        scores(isnan(scores)) = fillv;
+        % Fill the slots for this condition (positions are fixed: ((cond-1)*10 + 1 .. +10))
+        lin = ((cond-1)*IMGS_PER_COND + (1:numel(take)));
+        scores(lin) = vals(:);
     end
 
     % --- (AlexNet scoring kept for reference; disabled) ---
@@ -288,7 +288,7 @@ if cond_ptr > N_COND
             figure; scatter(generations, scores_all); xlabel('Generation'); ylabel('FR score'); title('Scores by block');
         catch, end
 
-        C = {'fix(0,0)'};   % graceful end
+        C = {sprintf('fix(%d,%d)', fix(1), fix(2))};   % graceful end
         TrialRecord.NextBlock = -1;  %#ok<NASGU>
         TrialRecord.NextCondition = 1; %#ok<NASGU>
         return
@@ -296,6 +296,12 @@ if cond_ptr > N_COND
 
     % --- 6) Evolve to NEXT block using the FR scores we just computed ---
     next_block_idx = current_block_idx + 1;
+
+    scores = scores';
+    disp('------scores---------')
+    disp((scores)')
+    % disp('-----codes_block ------')
+    % disp(size(codes_block))
     
     [codes_new, ~, ~] = optim.doScoring(codes_block, scores, true);
     codes_block = codes_new;
@@ -312,7 +318,9 @@ if cond_ptr > N_COND
 %         end
 %     end
 
-%     % --- 7) Render NEXT block images (or reuse if no generator) ---
+    % --- 7) Render NEXT block images (or reuse if no generator) ---
+    [block_image_names, block_cond_names] = build_block_images(G, codes_block, OUT_DIR, OUT_DIR_REL, N_COND, IMGS_PER_COND, next_block_idx);
+    
 %     if ~isempty(G)
 %         [block_image_names, block_cond_names] = build_block_images(G, codes_block, OUT_DIR, OUT_DIR_REL, N_COND, IMGS_PER_COND, next_block_idx);
 %     else
@@ -340,9 +348,9 @@ cond_idx   = cond_order(cond_ptr);            % 1..4
 names_cond = block_cond_names(cond_idx, :);   % 1×10 filenames
 
 % TaskObjects: #1 is fixation, then the 10 images for this condition
-C = { 'fix(0,0)' };
+C = { sprintf('fix(%d,%d)', fix(1), fix(2)) };
 for k = 1:IMGS_PER_COND
-    C{end+1} = sprintf('pic(%s,0,0)', names_cond{k}); %#ok<AGROW>
+    C{end+1} = sprintf('pic(%s,%f,%f,%f,%f)', names_cond{k}, img_loc(1), img_loc(2), img_size(1), img_size(2)); %#ok<AGROW>
 end
 
 % Remember which condition we scheduled THIS trial with (to log on next call)

@@ -23,6 +23,8 @@ function NAMES = inital_image_generator(N, outdir, imgSize, seed)
 
     H = imgSize(1); W = imgSize(2);
     NAMES = cell(N,1);
+    codes = zeros(N,4096,'double');   % each row = 1x4096 code for one image
+
 
     for i = 1:N
         % ---- make a smooth "shadow" field in [-1, 1] ----
@@ -36,6 +38,11 @@ function NAMES = inital_image_generator(N, outdir, imgSize, seed)
         % Save as 3-channel grayscale (RGB) for compatibility
         rgb = repmat(img, [1 1 3]);
 
+        % ---- derive a 1x4096 code from the grayscale image ----
+        % Resize to 64x64 and flatten to a row vector in [0,1]
+        small = imresize(img, [64 64], 'bicubic');     % img is already grayscale uint8
+        codes(i,:) = reshape(double(small)/255, 1, 4096);
+
         fname = sprintf('img_%03d.png', i);
         imwrite(rgb, fullfile(outdir, fname));
 
@@ -44,7 +51,8 @@ function NAMES = inital_image_generator(N, outdir, imgSize, seed)
     end
 
     % Also save an images.mat for convenience
-    save(fullfile(pwd,'images.mat'), 'NAMES', '-v7');
+    save(fullfile(pwd,'images.mat'), 'NAMES', 'codes', '-v7');
+
 
 end
 
