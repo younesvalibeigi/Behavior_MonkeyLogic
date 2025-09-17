@@ -24,6 +24,10 @@ fix_hold_pre = 300;     % hold fixation before the image train (optional)
 on_ms  = 100;
 off_ms = 100;
 
+% TTL settings
+ttl_obj = 12;                  % <-- TaskObject index for ttl(1); adjust if different
+ttl_ms  = 10;      % 10 ms pulse (or set to round(1000/MLConfig.RefreshRate) for 1 frame)
+
 % Windows (deg) if using eye
 fix_radius  = 2.0;
 hold_radius = 2.5;
@@ -35,19 +39,32 @@ error_type = 0;
 toggleobject(fix,'eventmarker',10);
 if ML_eyepresent
     ontarget = eyejoytrack('acquirefix', fix, fix_radius, wait_for_fix);
-    if ~ontarget, error_type = 4; end % no fixation
+    if ~ontarget, error_type = 1; end % no fixation
     if 0==error_type
         ontarget = eyejoytrack('holdfix', fix, hold_radius, fix_hold_pre);
-        if ~ontarget, error_type = 3; end % broke fixation
+        if ~ontarget, error_type = 2; end % broke fixation
     end
 end
 
 % Run the 10-image burst
+num_TTL = 0;
 if 0==error_type
     for k = 1:10
-        toggleobject(imgs(k), 'eventmarker', 20+k); % 21..30
-        idle(on_ms);
-        toggleobject(imgs(k),'status','off');
+        % Image ON + TTL ON at the same flip, with event code 21..30
+        toggleobject([imgs(k) ttl_obj], 'eventmarker', 20+k);
+        % keep track of number of images shown
+        num_TTL = num_TTL +1;
+        
+        % Keep TTL high for ttl_ms, then drop it while keeping image ON
+        idle(ttl_ms);
+        toggleobject(ttl_obj, 'status', 'off');
+        
+        % Finish the remaining ON time so total ON = on_ms
+        idle(on_ms - ttl_ms);
+        
+        % Image OFF
+        toggleobject(imgs(k), 'status', 'off');
+
         if k < 10
             idle(off_ms);
             if ML_eyepresent
@@ -58,6 +75,9 @@ if 0==error_type
         end
     end
 end
+
+bhv_variable('num_TTL', num_TTL);
+TrialRecord.User.num_TTL = num_TTL;
 
 % Clear screen
 toggleobject([fix imgs], 'status','off');

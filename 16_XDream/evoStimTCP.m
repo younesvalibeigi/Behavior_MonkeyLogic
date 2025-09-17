@@ -24,19 +24,21 @@ fixation_point = 1;                  % TaskObject #1 = fixation
 % Images are TaskObject #2..#11 (10 images total)
 prob_stimulus = (2:11)';             % Use your own order or randomize if desired
 % prob_stimulus = prob_stimulus(randperm(numel(prob_stimulus))); % (optional)
-
+%disp(Screen.RefreshRate)               % in hertz
+%disp(Screen.FrameLength)               % in milliseconds)
+frameLength = Screen.FrameLength;
 % ---- Timing (ms) ----
 wait_for_fix = 20000;
-initial_fix  = 300;                  % pre-fix hold before the train
-stim_time    = 100;                  % ON 100 ms
-delay_time   = 100;                  % OFF 100 ms (between images)
+initial_fix  = frameLength*6; % 100                 % pre-fix hold before the train
+stim_time    = frameLength*6; % 100                 % ON 100 ms
+delay_time   = frameLength*6; % 100                 % OFF 100 ms (between images)
 fix_radius   = 1.6;
 hold_radius  = 1.9;
 choice_radius = 3; %#ok<NASGU>      % not used here, kept for consistency
 
 % ---- TTL config ----
 ttl_port     = 1;                    % Port 1 in I/O menu
-ttl_duration = 10;                   % 10 ms pulse at each image onset
+ttl_duration = frameLength;                   % 16.6667 ms pulse at each image onset
 
 % Expose a couple variables to BHV for logging
 bhv_variable('stim_time',stim_time,'delay_time',delay_time,'ttl_port',ttl_port,'ttl_duration',ttl_duration);
@@ -63,7 +65,7 @@ for k = 1:N
     % TTL adapter (fires at scene start)
     ttl = TTLOutput(tracker);
     ttl.Port     = ttl_port;         % [1] if only one port, can be vector if needed
-    ttl.Duration = ttl_duration;     % 10 ms pulse
+    ttl.Duration = ttl_duration;     % 16.7 ms pulse
 
     % Fixation gate chained AFTER TTL so TTL runs concurrently with the scene
     fixK = SingleTarget(ttl);
@@ -134,10 +136,18 @@ TrialRecord.User.num_TTL = num_TTL;
 % Reward & end
 idle(0);  % clear screen
 if 0==error_type
-    goodmonkey(60, 'juiceline',1, 'numreward',1, 'pausetime',200, 'eventmarker',reward_eventmaker);
-else
-    idle(10);
+    numbers = [0, 1, 2, 3, 4];
+    probabilities = [0.01, 0.79, 0.15, 0.04 0.01];
+    % Sample a number based on the specified probabilities
+    num_juice = randsample(numbers, 1, true, probabilities);
+    pauseTime = frameLength*12; %% 200
+    goodmonkey(75, 'juiceline',1, 'numreward',num_juice, 'pausetime',pauseTime, 'eventmarker',reward_eventmaker);
+
+    %goodmonkey(60, 'juiceline',1, 'numreward',1, 'pausetime',200, 'eventmarker',reward_eventmaker);
+% else
+%     idle(frameLength);
 end
 
 trialerror(error_type);
-set_iti( (error_type==0) * 10 + (error_type~=0) * 500 );
+set_iti(0)
+%set_iti( (error_type==0) * 10 + (error_type~=0) * 500 );

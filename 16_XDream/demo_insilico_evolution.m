@@ -98,3 +98,57 @@ end
 figure;
 montage(ss)
 xlabel("Generation"); ylabel("activation")
+%%
+G = FC6Generator("matlabGANfc6.mat"); % put the path to this matfile here.
+net = alexnet(); % Use one unit in AlexNet as in silico model of the neuron
+% Choose your unit. 
+    % ix, iy are locations on feature map.
+    % iChan is the channel. 
+    % default one is the "neuron" corresponding to gold fish class from
+    % AlexNet.
+layer = "fc6"; iChan = 2; ix = 1; iy = 1;  
+%%
+S = load(fullfile(pwd,'images.mat'));
+%%
+options = struct("init_sigma",3.0);
+optim = CMAES_simple(4096, [], options);
+disp(optim.opts)
+%%
+%data = load("texture_init_code.mat");
+%init_z = data.codes;
+codes = S.codes;
+codes_all = [];
+scores_all = [];
+scores_exc_all = [];
+scores_inh_all = [];
+generations = [];
+img_traj = {};
+for iGen = 1:50
+    disp(iGen)
+    imgs = G.visualize(codes);
+    acts = squeeze(activations(net,imgs,layer))';
+    scores_exc = acts(:,10);
+    scores_inh = acts(:,20);
+    scores = scores_exc - 0.3*scores_inh;
+    [codes_new] = optim.doScoring(codes,scores,true);
+    % record some info for analysis
+    codes_all = [codes_all; codes];
+    scores_all = [scores_all; scores];
+    scores_exc_all = [scores_exc_all; scores_exc];
+    scores_inh_all = [scores_inh_all; scores_inh];
+    generations = [generations; ones(numel(scores),1)*iGen];
+    img_traj{iGen} = G.visualize(mean(codes,1));
+    codes = codes_new;
+end
+% 
+figure;
+montage(img_traj)
+xlabel("Generation"); ylabel("activation")
+figure;
+scatter(generations, scores_all)
+hold on
+scatter(generations, scores_exc_all)
+scatter(generations, scores_inh_all)
+hold off
+legend('scores', 'exc', 'inh')
+xlabel("Generation"); ylabel("activation")

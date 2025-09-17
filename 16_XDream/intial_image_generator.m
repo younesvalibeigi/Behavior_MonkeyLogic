@@ -31,8 +31,11 @@ function NAMES = inital_image_generator(N, outdir, imgSize, seed)
         f = mk_shadow_field(H,W);
 
         % ---- map to gray background (mean ~128) with soft contrast ----
-        amp  = randi([40 80]);                % contrast amplitude (gray levels)
-        img  = 128 + amp * f;                  % double
+                % stronger contrast + slight non-linear boost toward extremes
+        amp    = randi([90 130]);              % higher amplitude
+        gamma  = 0.7 + 0.2*rand;               % <1 expands dark/bright zones
+        f_boost = sign(f) .* (abs(f).^gamma);  % boost contrast without changing sign
+        img    = 128 + amp * f_boost;          % double
         img  = uint8(min(max(img,0),255));     % clamp to [0,255]
 
         % Save as 3-channel grayscale (RGB) for compatibility
@@ -87,6 +90,57 @@ function f = mk_shadow_field(H,W)
     % Strong Gaussian blur to keep only “shadowy” structure
     sigma = randi([6 14]);
     f = imgaussfilt(f, sigma);
+
+    % ---- add high-contrast gratings (straight / circular) ----
+    ng = randi([1 3]);                    % number of grating components
+    [Xg,Yg] = meshgrid(1:W,1:H);
+    g = zeros(H,W);
+    
+    for k = 1:ng
+        p = rand;
+        if p < 0.55
+            % ---- Linear (oriented) grating ----
+            theta = 2*pi*rand;                 % angle
+            lam   = randi([8 28]);             % pixels per cycle
+            phi   = 2*pi*rand;
+            base  = cos(2*pi*((Xg*cos(theta) + Yg*sin(theta))/lam) + phi);
+    
+        elseif p < 0.80
+            % ---- Circular (concentric rings) grating: f(r) ----
+            cx  = randi([round(W*0.3) round(W*0.7)]);
+            cy  = randi([round(H*0.3) round(H*0.7)]);
+            r   = sqrt((Xg - cx).^2 + (Yg - cy).^2);
+            lam = randi([10 32]);              % radial wavelength (pixels)
+            phi = 2*pi*rand;
+            base = cos(2*pi*(r/lam) + phi);
+    
+        else
+            % ---- Radial (angular "spokes") grating: f(theta) ----
+            cx  = randi([round(W*0.3) round(W*0.7)]);
+            cy  = randi([round(H*0.3) round(H*0.7)]);
+            th  = atan2(Yg - cy, Xg - cx);     % angle map [-pi, pi]
+            nspokes = randi([8 24]);           % number of bright/dark spokes
+            phi = 2*pi*rand;
+            base = cos(nspokes*th + phi);
+    
+            % optional: smooth near center to avoid a harsh singularity
+            % (keeps spokes clean but reduces a tiny center artifact)
+            r = sqrt((Xg - cx).^2 + (Yg - cy).^2);
+            base = base .* (1 - exp(-(r/3).^2));
+        end
+    
+        % Optionally make sharp-edged (square-wave) gratings
+        if rand < 0.5
+            base = sign(base);
+        end
+    
+        g = g + base;
+    end
+
+    
+    g = g / max(1, ng);                 % average if multiple components
+    f = 0.6*f + 0.4*g;                  % blend gratings with shadows
+
 
     % Zero-mean and normalize to [-1, 1], with slight contrast jitter
     f = f - mean(f(:));
