@@ -3,6 +3,11 @@ function cond_no = userplot_Scores(TrialRecord, MLConfig)
     errors = TrialRecord.TrialErrors;
     num_completeCond = length(find(errors==0));
     scores_all = TrialRecord.User.scores_all;
+    try
+        scores_all = scores_all(:, 1); % Only take first column which is the scores, second and thrid are exc and inh
+    catch
+        scores_all = TrialRecord.User.scores_all;
+    end
     generations = TrialRecord.User.generations;
     IMGS_PER_BLOCK = TrialRecord.User.IMGS_PER_BLOCK;
     NatIMGS_PER_BLOCK = TrialRecord.User.NatIMGS_PER_BLOCK;

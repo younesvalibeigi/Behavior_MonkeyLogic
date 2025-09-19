@@ -40,8 +40,11 @@ choice_radius = 3; %#ok<NASGU>      % not used here, kept for consistency
 ttl_port     = 1;                    % Port 1 in I/O menu
 ttl_duration = frameLength;                   % 16.6667 ms pulse at each image onset
 
+N = TrialRecord.User.IMGS_PER_COND; %10;
+fr_chan_exc = TrialRecord.User.fr_chan_exc;
+fr_chan_inh = TrialRecord.User.fr_chan_inh;
 % Expose a couple variables to BHV for logging
-bhv_variable('stim_time',stim_time,'delay_time',delay_time,'ttl_port',ttl_port,'ttl_duration',ttl_duration);
+bhv_variable('stim_time',stim_time,'delay_time',delay_time,'ttl_port',ttl_port,'ttl_duration',ttl_duration, 'Num_imgs', N, 'fr_chan_exc',fr_chan_exc,'fr_chan_inh',fr_chan_inh);
 
 % ===================== SCENES =====================
 
@@ -54,8 +57,7 @@ wth0.WaitTime   = wait_for_fix;
 wth0.HoldTime   = initial_fix;
 scene0 = create_scene(wth0, fixation_point);
 
-% Build 10 stimulus scenes with TTL at onset
-N = 10;
+% Build N stimulus scenes with TTL at onset
 stim_scenes  = cell(N,1);
 stim_wth     = cell(N,1);
 delay_scenes = cell(N-1,1);
@@ -136,8 +138,8 @@ TrialRecord.User.num_TTL = num_TTL;
 % Reward & end
 idle(0);  % clear screen
 if 0==error_type
-    numbers = [0, 1, 2, 3, 4];
-    probabilities = [0.01, 0.79, 0.15, 0.04 0.01];
+    numbers = [0, 1, 2, 3, 4, 5];
+    probabilities = [0.01, 0.70, 0.19, 0.05 0.04, 0.01];
     % Sample a number based on the specified probabilities
     num_juice = randsample(numbers, 1, true, probabilities);
     pauseTime = frameLength*12; %% 200

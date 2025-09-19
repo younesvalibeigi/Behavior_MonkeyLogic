@@ -21,23 +21,30 @@ end
 
 % ============== Visual stimulus properties ==============
 fix = [0 0];
-img_loc = [-10 +2];
+img_loc = [-8 -2];
 pxperdeg = 36.039;
-img_size = [16 16]*pxperdeg;
+img_size = [12 12]*pxperdeg;
 
 % =================== Design constants ===================
 IMGS_PER_BLOCK = 40;                 % 4 conditions × 10 images
 NatIMGS_PER_BLOCK = 10;
 IMGS_PER_COND  = 10;
-N_COND         = IMGS_PER_BLOCK/IMGS_PER_COND + NatIMGS_PER_BLOCK/IMGS_PER_COND;  % 4 + 1 = 5
-MAX_BLOCKS     = 10;
+N_COND         = IMGS_PER_BLOCK/IMGS_PER_COND + NatIMGS_PER_BLOCK/IMGS_PER_COND;  % 4 + 1 = 5 % 8 + 2 = 10
+MAX_BLOCKS     = 50;
 
 TrialRecord.User.N_COND = N_COND;
+TrialRecord.User.IMGS_PER_COND = IMGS_PER_COND;
 
 % ===== FR SERVER (client) =====
 fr_server_ip   = '10.68.15.125';
 fr_server_port = 6010;              % matches your server
-fr_chan        = 4;                % electrode index 0..31  (row = fr_chan+1)
+fr_chan_exc        = -1;                % electrode index 0..31  (row = fr_chan_exc+1) if choose -1, no channel is chosen
+fr_chan_inh        = 19;                % electrode index 0..31  (row = fr_chan_inh+1)
+
+TrialRecord.User.fr_chan_exc = fr_chan_exc;
+TrialRecord.User.fr_chan_inh = fr_chan_inh;
+
+
 
 % ===== AlexNet (kept for reference; now commented) =====
 % alex_layer         = 'fc6';
@@ -252,8 +259,9 @@ if cond_ptr > N_COND
     %scores = nan(IMGS_PER_BLOCK, 1);
 
     % Which FR row to use
-    fr_row = fr_chan + 1;
-    % fr_row = max(1, min(32, fr_row)); % make sure it is in the boundry
+    fr_row_exc = fr_chan_exc + 1;
+    fr_row_inh = fr_chan_inh + 1;
+    % fr_row_exc = max(1, min(32, fr_row_exc)); % make sure it is in the boundry
 
    % For each condition 1..N_COND, find its TTLs (should be 10) in chronological order
     % for cond = 1:N_COND
@@ -264,15 +272,27 @@ if cond_ptr > N_COND
     %     end
     %     % Use at most IMGS_PER_COND = 10 TTLs (in case of any extra)
     %     %take = idx(1:min(IMGS_PER_COND, numel(idx)));
-    %     vals = FR_ok(fr_row, idx);
+    %     vals = FR_ok(fr_row_exc, idx);
     % 
     %     % Fill the slots for this condition (positions are fixed: ((cond-1)*10 + 1 .. +10))
     %     lin = ((cond-1)*IMGS_PER_COND + (1:numel(idx)));
     %     scores(lin) = vals(:);
     %     disp(idx)
     % end
-    scores = FR_ok(fr_row, :); % all scores, the first 40 are generated image, the last 20 are control images
-    %scores_ctrl = FR_ok(fr_row, IMGS_PER_BLOCK+1:end); 
+    if fr_row_exc<1 || 32<fr_row_exc
+        scores_exc = zeros(size(FR_ok(1, :)));
+    else
+        scores_exc = FR_ok(fr_row_exc, :); % all scores, the first 40 are generated image, the last 20 are control images
+    end
+    if fr_row_inh<1 || 32<fr_row_inh
+        scores_inh = zeros(size(FR_ok(1, :)));
+    else
+        scores_inh = FR_ok(fr_row_inh, :); % all scores, the first 40 are generated image, the last 20 are control images
+    end
+    %scores = FR_ok(fr_row_exc, :); % all scores, the first 40 are generated image, the last 20 are control images
+    scores = scores_exc - scores_inh;
+
+    %scores_ctrl = FR_ok(fr_row_exc, IMGS_PER_BLOCK+1:end); 
 
     % --- (AlexNet scoring kept for reference; disabled) ---
     % imgs = []; acts_fc6 = [];
@@ -288,9 +308,12 @@ if cond_ptr > N_COND
 
     % --- 4) Log CURRENT block (codes/names/scores/generation) ---
     codes_for_log = codes_block;
+    % disp(scores(:))
+    % disp(scores_exc(:))
+    % disp(scores_inh(:))
 
     codes_all   = [codes_all;  codes_for_log];
-    scores_all  = [scores_all; scores(:)];
+    scores_all  = [scores_all; scores(:) scores_exc(:) scores_inh(:)];
     generations = [generations; ones((IMGS_PER_BLOCK+NatIMGS_PER_BLOCK),1)*current_block_idx];
     names_all   = [names_all;  block_image_names(:)];
 
@@ -322,6 +345,7 @@ if cond_ptr > N_COND
         catch, end
         try
             figure; scatter(generations, scores_all); xlabel('Generation'); ylabel('FR score'); title('Scores by block');
+            legend('scores', 'scores exc', 'scores inh')
         catch, end
 
         C = {sprintf('fix(%d,%d)', fix(1), fix(2))};   % graceful end

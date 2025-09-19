@@ -130,6 +130,7 @@ for iGen = 1:50
     scores_exc = acts(:,10);
     scores_inh = acts(:,20);
     scores = scores_exc - 0.3*scores_inh;
+    %scores = -scores_inh;
     [codes_new] = optim.doScoring(codes,scores,true);
     % record some info for analysis
     codes_all = [codes_all; codes];
@@ -147,7 +148,7 @@ xlabel("Generation"); ylabel("activation")
 figure;
 scatter(generations, scores_all)
 hold on
-scatter(generations, scores_exc_all)
+%scatter(generations, scores_exc_all)
 scatter(generations, scores_inh_all)
 hold off
 legend('scores', 'exc', 'inh')
