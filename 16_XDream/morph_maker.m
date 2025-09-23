@@ -1,12 +1,12 @@
 % Folders to process
 folders = {
-    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\250919_171805__evol_stimuli_d', ...
-    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\250919_180121__evol_stimuli_e'
+    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\250923_123624__evol_stimuli_b', ...
+    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\250923_130348__evol_stimuli_c'
 };
-numSteps = 5;
+numSteps = 9;
 %process_last_block_avg()
 process_last_block_avg_morph(folders, numSteps)
-%process_last_block_avg_slerp(foldersnum, numSteps)
+process_last_block_avg_slerp(folders, numSteps)
 
 function process_last_block_avg(folders)
     
@@ -97,7 +97,7 @@ function process_last_block_avg_morph(folders, numSteps)
     img1 = double(avg_imgs{1});
     img2 = double(avg_imgs{2});
 
-    outDir = fullfile(pwd, 'morph_images');
+    outDir = fullfile(pwd, 'morph_images_linear');
     if ~exist(outDir, 'dir')
         mkdir(outDir);
     end
@@ -109,7 +109,7 @@ function process_last_block_avg_morph(folders, numSteps)
         morph_img = (1-alpha)*img1 + alpha*img2;
         morph_img = uint8(morph_img);
 
-        outName = fullfile(outDir, sprintf('morph%d.png', k));
+        outName = fullfile(outDir, sprintf('morph_linear%d.png', k));
         imwrite(morph_img, outName);
         fprintf('Saved %s\n', outName);
     end
@@ -181,6 +181,7 @@ function process_last_block_avg_slerp(folders, numSteps)
         if abs(theta) < 1e-6
             % if vectors are almost the same, fallback to linear interp
             v = (1-alpha)*v1 + alpha*v2;
+            disp('ss')
         else
             % spherical interpolation
             v = (sin((1-alpha)*theta)/sin(theta))*v1 + (sin(alpha*theta)/sin(theta))*v2;
@@ -189,7 +190,7 @@ function process_last_block_avg_slerp(folders, numSteps)
         morph_img = reshape(v, size(img1));
         morph_img = uint8(morph_img);
 
-        outName = fullfile(outDir, sprintf('morph%d.png', k));
+        outName = fullfile(outDir, sprintf('morph_slerp%d.png', k));
         imwrite(morph_img, outName);
         fprintf('Saved %s\n', outName);
     end
