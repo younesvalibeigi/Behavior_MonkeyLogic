@@ -197,7 +197,7 @@ else
                                     if ~wth5.Success
                                         error_type = 4;
                                     else
-                                        goodmonkey(reward+3,'eventmarker',100);
+                                        %goodmonkey(reward+3,'eventmarker',100);
                                         run_scene(scene05,delay_eventmaker);     
                                         if ~wth05.Success
                                             error_type = 5;
@@ -238,7 +238,11 @@ else
                                                                             if ~wth10.Success
                                                                                 error_type = 9;
                                                                             else
-                                                                                goodmonkey(reward+5,'eventmarker',100);
+                                                                                numbers = [0, 1, 2, 3, 4, 5];
+                                                                                probabilities = [0.01, 0.70, 0.19, 0.05 0.04, 0.01];
+                                                                                num_juice = randsample(numbers, 1, true, probabilities);
+                                                                                goodmonkey(reward, 'juiceline',1, 'numreward',num_juice, 'pausetime',200, 'eventmarker',reward_eventmaker)
+                                                                                
                                                                                 error_type = 0; % TASK completed
                                                                             end
                                                                         end

@@ -1,7 +1,7 @@
 % Folders to process
 folders = {
-    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\250923_123624__evol_stimuli_b', ...
-    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\250923_130348__evol_stimuli_c'
+    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\250925_122520__evol_stimuli_b', ...
+    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\250925_125544__evol_stimuli_c'
 };
 numSteps = 9;
 %process_last_block_avg()

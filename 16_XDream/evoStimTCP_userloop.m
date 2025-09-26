@@ -21,9 +21,9 @@ end
 
 % ============== Visual stimulus properties ==============
 fix = [0 0];
-img_loc = [-5 -2];
+img_loc = [-3 -1];
 pxperdeg = 36.039;
-img_size = [10 10]*pxperdeg;
+img_size = [6 6]*pxperdeg;
 
 % =================== Design constants ===================
 IMGS_PER_BLOCK = 40;                 % 4 conditions × 10 images
@@ -38,7 +38,7 @@ TrialRecord.User.IMGS_PER_COND = IMGS_PER_COND;
 % ===== FR SERVER (client) =====
 fr_server_ip   = '10.68.15.125';
 fr_server_port = 6010;              % matches your server
-fr_chan_exc        = 12;                % electrode index 0..31  (row = fr_chan_exc+1) if choose -1, no channel is chosen
+fr_chan_exc        = 9;                % electrode index 0..31  (row = fr_chan_exc+1) if choose -1, no channel is chosen
 fr_chan_inh        = -1;                % electrode index 0..31  (row = fr_chan_inh+1)
 
 TrialRecord.User.fr_chan_exc = fr_chan_exc;
@@ -282,8 +282,8 @@ if cond_ptr > N_COND
     if fr_row_exc<1 || 32<fr_row_exc
         scores_exc = zeros(size(FR_ok(1, :)));
     else
-        %scores_exc = FR_ok(fr_row_exc, :); % all scores, the first 40 are generated image, the last 20 are control images
-        scores_exc = FR_ok(fr_row_exc, :)+FR_ok(fr_row_exc-1, :)+FR_ok(fr_row_exc+1, :); % all scores, the first 40 are generated image, the last 20 are control images
+        scores_exc = FR_ok(fr_row_exc, :); % all scores, the first 40 are generated image, the last 20 are control images
+        %scores_exc = FR_ok(fr_row_exc, :)+FR_ok(fr_row_exc-1, :)+FR_ok(fr_row_exc+1, :); % all scores, the first 40 are generated image, the last 20 are control images
     end
     if fr_row_inh<1 || 32<fr_row_inh
         scores_inh = zeros(size(FR_ok(1, :)));
