@@ -1,12 +1,14 @@
 % Folders to process
 folders = {
-    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\250925_122520__evol_stimuli_b', ...
-    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\250925_125544__evol_stimuli_c'
+    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\250929_135943__evol_stimuli_f', ...
+    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\250929_142801__evol_stimuli_g'
 };
 numSteps = 9;
 %process_last_block_avg()
-process_last_block_avg_morph(folders, numSteps)
-process_last_block_avg_slerp(folders, numSteps)
+%process_last_block_avg_morph(folders, numSteps)
+%process_last_block_avg_slerp(folders, numSteps)
+process_last_block_avg_linear_V2(folders, numSteps)
+process_last_block_avg_slerp_v2(folders, numSteps)
 
 function process_last_block_avg(folders)
     
@@ -192,6 +194,160 @@ function process_last_block_avg_slerp(folders, numSteps)
 
         outName = fullfile(outDir, sprintf('morph_slerp%d.png', k));
         imwrite(morph_img, outName);
+        fprintf('Saved %s\n', outName);
+    end
+end
+function process_last_block_avg_slerp_v2(folders, numSteps)
+    G   = FC6Generator('matlabGANfc6.mat');
+    % Generate morph images by SLERP interpolation in latent space
+    % Inputs:
+    %   folders: cell array of 2 folder paths, each with codes_all.mat + generations.mat
+    %   numSteps: number of steps in the morph (including endpoints)
+
+    avg_latents = cell(1,2); % store the averaged latent codes
+
+    for f = 1:length(folders)
+        folder = folders{f};
+
+        % Load latent codes and generation indices
+        data = load(fullfile(folder, 'codes_all.mat'));       % contains codes_all
+        gens = load(fullfile(folder, 'generations.mat'));     % contains generations
+        codes_all = data.codes_all;
+        generations = gens.generations;
+
+        
+        Ngen = length(generations) / 50;   % total number of generations
+        idx_keep = [];
+        
+        for g = 1:Ngen
+            startIdx = (g-1)*50 + 1;
+            keep = startIdx : startIdx+39; % first 40 of each generation
+            idx_keep = [idx_keep keep];
+        end
+
+        generations = generations(idx_keep);
+        % Find the last generation
+        lastGen = max(generations);
+
+        % Find the rows belonging to the last generation
+        idx = find(generations == lastGen);
+
+        % Take the first 40 codes of this generation
+        zset = codes_all(idx(1:40), :);
+
+        % Average across the 40 codes -> one representative latent
+        avg_latents{f} = mean(zset, 1);
+    end
+
+    % --- Spherical interpolation between the two average latents ---
+    z1 = avg_latents{1}(:);
+    z2 = avg_latents{2}(:);
+
+    % Normalize for slerp
+    z1n = z1;% / norm(z1);
+    z2n = z2;% / norm(z2);
+
+    cosTheta = dot(z1n, z2n);
+    cosTheta = max(min(cosTheta, 1), -1);
+    theta = acos(cosTheta);
+    
+    fprintf('Angle between z1 and z2: %.6f radians (%.6f degrees)\n', theta, theta*180/pi);
+
+    % Output directory
+    outDir = fullfile(pwd, 'morph_images_slerp');
+    if ~exist(outDir, 'dir')
+        mkdir(outDir);
+    end
+
+    % --- Interpolate ---
+    for k = 1:numSteps
+        alpha = (k-1)/(numSteps-1);
+
+        if abs(theta) < 1e-6
+            v = (1-alpha)*z1 + alpha*z2;
+        else
+            v = (sin((1-alpha)*theta)/sin(theta))*z1 + ...
+                (sin(alpha*theta)/sin(theta))*z2;
+        end
+
+        z_interp = reshape(v, 1, []); % 1 × 4096 vector
+
+        % --- Generate image from latent (replace with your generator call) ---
+        % Example placeholder:
+        img = G.visualize(z_interp); % TODO: replace with your generator
+
+        % Save interpolated image
+        outName = fullfile(outDir, sprintf('morph_slerp%d.png', k));
+        imwrite(uint8(img), outName);
+        fprintf('Saved %s\n', outName);
+    end
+end
+
+function process_last_block_avg_linear_V2(folders, numSteps)
+    G   = FC6Generator('matlabGANfc6.mat');
+    % Generate morph images by LINEAR interpolation in latent space
+    % Inputs:
+    %   folders: cell array of 2 folder paths, each with codes_all.mat + generations.mat
+    %   numSteps: number of steps in the morph (including endpoints)
+
+    avg_latents = cell(1,2); % store the averaged latent codes
+
+    for f = 1:length(folders)
+        folder = folders{f};
+
+        % Load latent codes and generation indices
+        data = load(fullfile(folder, 'codes_all.mat'));       % contains codes_all
+        gens = load(fullfile(folder, 'generations.mat'));     % contains generations
+        codes_all = data.codes_all;
+        generations = gens.generations;
+
+        % --- Keep only the first 40 codes per generation ---
+        Ngen = length(generations) / 50;   % total number of generations
+        idx_keep = [];
+        for g = 1:Ngen
+            startIdx = (g-1)*50 + 1;
+            keep = startIdx : startIdx+39; % first 40 of each generation
+            idx_keep = [idx_keep keep];
+        end
+
+        generations = generations(idx_keep);
+
+        % --- Find the last generation ---
+        lastGen = max(generations);
+
+        % --- Find the rows belonging to the last generation ---
+        idx = find(generations == lastGen);
+
+        % --- Take the first 40 codes of this generation ---
+        zset = codes_all(idx(1:40), :);
+
+        % --- Average across the 40 codes -> one representative latent ---
+        avg_latents{f} = mean(zset, 1);
+    end
+
+    % --- Linear interpolation between the two average latents ---
+    z1 = avg_latents{1}(:);
+    z2 = avg_latents{2}(:);
+
+    % Output directory
+    outDir = fullfile(pwd, 'morph_images_linear');
+    if ~exist(outDir, 'dir')
+        mkdir(outDir);
+    end
+
+    % --- Interpolate ---
+    for k = 1:numSteps
+        alpha = (k-1)/(numSteps-1);
+
+        v = (1-alpha)*z1 + alpha*z2; % linear interpolation
+        z_interp = reshape(v, 1, []); % 1 × 4096 vector
+
+        % --- Generate image from latent ---
+        img = G.visualize(z_interp);
+
+        % Save interpolated image
+        outName = fullfile(outDir, sprintf('morph_linear%d.png', k));
+        imwrite(uint8(img), outName);
         fprintf('Saved %s\n', outName);
     end
 end

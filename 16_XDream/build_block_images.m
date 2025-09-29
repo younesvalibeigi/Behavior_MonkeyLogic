@@ -14,6 +14,10 @@ function [all_names, cond_table] = build_block_images(G, codes_block, outdir_abs
 %   all_names  : IMGS_PER_BLOCKx1 cellstr of relative paths '<outdir_rel>/blk%03d_img_%03d.png'
 %   cond_table : N_COND x IMGS_PER_COND cellstr (row i = condition i's images)
 
+fname_codes = sprintf('codes_blk%03d.mat', block_idx);
+fpath_codes = fullfile(outdir_abs, fname_codes);
+save(fpath_codes, 'codes_block');
+
 IMGS_PER_BLOCK = size(codes_block,1);
 imgs = G.visualize(codes_block');      % -> HxWx3xIMGS_PER_BLOCK uint8
 if ~isa(imgs,'uint8'), imgs = im2uint8(imgs); end
