@@ -1,14 +1,24 @@
+G   = FC6Generator('matlabGANfc6.mat');
+
+
 % Folders to process
 folders = {
-    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\250929_135943__evol_stimuli_f', ...
-    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\250929_142801__evol_stimuli_g'
+    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\250930_180102__evol_stimuli_g', ...
+    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\250930_182844__evol_stimuli_h'
 };
 numSteps = 9;
 %process_last_block_avg()
 %process_last_block_avg_morph(folders, numSteps)
 %process_last_block_avg_slerp(folders, numSteps)
-process_last_block_avg_linear_V2(folders, numSteps)
-process_last_block_avg_slerp_v2(folders, numSteps)
+figure,
+imgs_lin = process_last_block_avg_linear_V2(G, folders, numSteps);
+imgs_slerp = process_last_block_avg_slerp_v2(G, folders, numSteps);
+% figure,
+% for k=1:numSteps
+%     subplot(1, numSteps,k)
+%     imagesc(imgs_lin{1,k}-imgs_slerp{1,k})
+%     %sum(abs(imgs_lin{1,k}-imgs_slerp{1,k}))
+% end
 
 function process_last_block_avg(folders)
     
@@ -197,8 +207,9 @@ function process_last_block_avg_slerp(folders, numSteps)
         fprintf('Saved %s\n', outName);
     end
 end
-function process_last_block_avg_slerp_v2(folders, numSteps)
-    G   = FC6Generator('matlabGANfc6.mat');
+
+function imgs = process_last_block_avg_slerp_v2(G, folders, numSteps)
+    %G   = FC6Generator('matlabGANfc6.mat');
     % Generate morph images by SLERP interpolation in latent space
     % Inputs:
     %   folders: cell array of 2 folder paths, each with codes_all.mat + generations.mat
@@ -244,14 +255,17 @@ function process_last_block_avg_slerp_v2(folders, numSteps)
     z2 = avg_latents{2}(:);
 
     % Normalize for slerp
-    z1n = z1;% / norm(z1);
-    z2n = z2;% / norm(z2);
+    z1n = z1 / norm(z1);
+    z2n = z2 / norm(z2);
+    disp( norm(z1))
+    disp( norm(z2))
+    fprintf('norm(Z1_level1): %.6f | norm(z2_level1): %.6f)\n', norm(z1), norm(z2));
 
     cosTheta = dot(z1n, z2n);
     cosTheta = max(min(cosTheta, 1), -1);
     theta = acos(cosTheta);
     
-    fprintf('Angle between z1 and z2: %.6f radians (%.6f degrees)\n', theta, theta*180/pi);
+    fprintf('Thetha: %.6f radians | CosTheta: %.6f)\n', theta, cosTheta);
 
     % Output directory
     outDir = fullfile(pwd, 'morph_images_slerp');
@@ -260,21 +274,27 @@ function process_last_block_avg_slerp_v2(folders, numSteps)
     end
 
     % --- Interpolate ---
+    imgs = cell(1,numSteps );
     for k = 1:numSteps
         alpha = (k-1)/(numSteps-1);
 
-        if abs(theta) < 1e-6
-            v = (1-alpha)*z1 + alpha*z2;
-        else
-            v = (sin((1-alpha)*theta)/sin(theta))*z1 + ...
-                (sin(alpha*theta)/sin(theta))*z2;
-        end
+        % if abs(theta) < 1e-6
+        %     v = (1-alpha)*z1 + alpha*z2;
+        % else
+        v = (sin((1-alpha)*theta)/sin(theta))*z1 + ...
+            (sin(alpha*theta)/sin(theta))*z2;
+        % end
 
         z_interp = reshape(v, 1, []); % 1 × 4096 vector
 
         % --- Generate image from latent (replace with your generator call) ---
         % Example placeholder:
         img = G.visualize(z_interp); % TODO: replace with your generator
+        imgs{1, k} = img;
+
+        subplot(2, numSteps, numSteps+k)
+        imshow(img)
+        title(norm(z_interp))
 
         % Save interpolated image
         outName = fullfile(outDir, sprintf('morph_slerp%d.png', k));
@@ -283,8 +303,8 @@ function process_last_block_avg_slerp_v2(folders, numSteps)
     end
 end
 
-function process_last_block_avg_linear_V2(folders, numSteps)
-    G   = FC6Generator('matlabGANfc6.mat');
+function imgs = process_last_block_avg_linear_V2(G, folders, numSteps)
+    %G   = FC6Generator('matlabGANfc6.mat');
     % Generate morph images by LINEAR interpolation in latent space
     % Inputs:
     %   folders: cell array of 2 folder paths, each with codes_all.mat + generations.mat
@@ -336,6 +356,8 @@ function process_last_block_avg_linear_V2(folders, numSteps)
     end
 
     % --- Interpolate ---
+    imgs = cell(1,numSteps );
+
     for k = 1:numSteps
         alpha = (k-1)/(numSteps-1);
 
@@ -344,6 +366,11 @@ function process_last_block_avg_linear_V2(folders, numSteps)
 
         % --- Generate image from latent ---
         img = G.visualize(z_interp);
+        imgs{1, k} = img;
+
+        subplot(2, numSteps, k)
+        imshow(img)
+        title(norm(z_interp))
 
         % Save interpolated image
         outName = fullfile(outDir, sprintf('morph_linear%d.png', k));
