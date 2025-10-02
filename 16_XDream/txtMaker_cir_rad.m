@@ -4,9 +4,9 @@ header_row = {'Condition', 'Frequency', 'Block', 'Timing File', 'TaskObject#1', 
 % Define the data rows
 data_rows = cell(10, length(header_row));
 fix = [0 0];
-rf = [-2.0 -1.5];
+rf = [-3.0 -0.5];
 pxperdeg = 36.039;
-img_size = [6 6]*pxperdeg;
+img_size = [5 5]*pxperdeg;
 for i = 1:2
     block = 1;%mod(i,64)+1;
     data_row = {num2str(i), '1', num2str(block), 'stimulus_show1img', sprintf('fix(%.2f,%.2f)',fix(1), fix(2))};

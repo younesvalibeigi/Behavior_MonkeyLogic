@@ -3,8 +3,8 @@ G   = FC6Generator('matlabGANfc6.mat');
 
 % Folders to process
 folders = {
-    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\251001_143018__evol_stimuli_h', ...
-    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\251001_145332__evol_stimuli_i'
+    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\251002_113823__evol_stimuli_f', ...
+    'C:\Users\labuser\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\16_XDream\251002_120631__evol_stimuli_g'
 };
 numSteps = 9;
 %process_last_block_avg()

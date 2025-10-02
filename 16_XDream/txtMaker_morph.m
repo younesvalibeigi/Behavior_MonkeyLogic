@@ -4,9 +4,9 @@ header_row = {'Condition', 'Frequency', 'Block', 'Timing File', 'TaskObject#1', 
 % Define the data rows
 data_rows = cell(10, length(header_row));
 fix = [0 0];
-rf = [-2.0 -1.5];
+rf = [-3.0 -0.5];
 pxperdeg = 36.039;
-img_size = [7 7]*pxperdeg;
+img_size = [6 6]*pxperdeg;
 num_levels = 9;
 for i = 1:num_levels
     block = 1;%mod(i,64)+1;
