@@ -1,0 +1,5 @@
+# Ignore MonkeyLogic behavior files
+*.bhv2
+
+# Ignore image files
+*.png
