@@ -41,7 +41,7 @@ header_row = {'Condition', 'Frequency', 'Block', 'Timing File', 'TaskObject#1', 
 % Define the data rows
 data_rows = cell(10, length(header_row));
 fix = [0 0];
-rf = [-3.0+fix(1) -2.0+fix(2)];
+rf = [-5.0+fix(1) -1.5+fix(2)];
 pxperdeg = 36.039;
 img_size = [10 10]*pxperdeg;
 for i = 1:N*N

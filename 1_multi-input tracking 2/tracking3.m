@@ -24,7 +24,7 @@ if isfield(TrialRecord.User,'sfreq'), sfreq = TrialRecord.User.sfreq; else sfreq
 if isfield(TrialRecord.User,'tfreq'), tfreq = TrialRecord.User.tfreq; else tfreq = 3.2; end
 
 % editables
-reward_schedule_1 = [0 500 500 50]; %[200 500 500 60 90];
+reward_schedule_1 = [0 500 500 50]; %[200 500 500 60 90]; << ==== change them in the editable
 reward_schedule_2 = [5000 500 500 150];
 fix_radius = 5;
 reward_schedule = [reward_schedule_1;reward_schedule_2];

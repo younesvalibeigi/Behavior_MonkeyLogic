@@ -21,16 +21,16 @@ end
 
 % ============== Visual stimulus properties ==============
 fix = [0 0];
-img_loc = [-3.0 -0.5];
+img_loc = [-5.0 -1.5];
 pxperdeg = 36.039;
-img_size = [6 6]*pxperdeg;
+img_size = [9 9]*pxperdeg;
 
 % =================== Design constants ===================
 IMGS_PER_BLOCK = 40;                 % 4 conditions × 10 images
 NatIMGS_PER_BLOCK = 10;
 IMGS_PER_COND  = 10;
 N_COND         = IMGS_PER_BLOCK/IMGS_PER_COND + NatIMGS_PER_BLOCK/IMGS_PER_COND;  % 4 + 1 = 5 % 8 + 2 = 10
-MAX_BLOCKS     = 30;
+MAX_BLOCKS     = 50;
 
 TrialRecord.User.N_COND = N_COND;
 TrialRecord.User.IMGS_PER_COND = IMGS_PER_COND;
@@ -38,8 +38,8 @@ TrialRecord.User.IMGS_PER_COND = IMGS_PER_COND;
 % ===== FR SERVER (client) =====
 fr_server_ip   = '10.68.15.125';
 fr_server_port = 6010;              % matches your server
-fr_chan_exc        = -1;                % electrode index 0..31  (row = fr_chan_exc+1) if choose -1, no channel is chosen
-fr_chan_inh        = 22;                % electrode index 0..31  (row = fr_chan_inh+1)
+fr_chan_exc        = 24;                % electrode index 0..31  (row = fr_chan_exc+1) if choose -1, no channel is chosen
+fr_chan_inh        = -1;                % electrode index 0..31  (row = fr_chan_inh+1)
 
 TrialRecord.User.fr_chan_exc = fr_chan_exc;
 TrialRecord.User.fr_chan_inh = fr_chan_inh;
