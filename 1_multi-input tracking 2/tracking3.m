@@ -98,5 +98,5 @@ TrialRecord.User.tfreq = grat2b.TemporalFrequency;
 if error_type == 0
     set_iti(50)
 else
-    set_iti(1500)
+    set_iti(50) %1500
 end
