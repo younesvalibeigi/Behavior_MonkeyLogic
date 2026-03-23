@@ -8,17 +8,20 @@ delay_eventmaker = 30;
 reward_eventmaker = 90;
 
 
-%editable('reward','stim_time')
 %mouse_.showcursor(false);  % hide the mouse cursor from the subject
 fixation_point = 1;
 % Timing
 wait_time = 20000;
 fix_rad = 1.6;
 delay = 0;
-reward = 60; % if reward = 30 & reward-duration = 20 then each reward transfer 0.0411 ml water
-reward_interval = 25;
+reward_duration = 100; % 60 % if reward = 30 & reward-duration = 20 then each reward transfer 0.0411 ml water
+reward_interval = 100;
 stim_time = 100;
 
+numbers_drops = [0, 1, 2, 3, 4];
+probabilities_drops = [0.00, 0.90, 0.8, 0.02 0.00];
+
+editable('fix_rad', 'reward_duration', 'reward_interval', 'probabilities_drops');
 
 prbe_stim_matrix = (2:21)';
 random_prob_loc = prbe_stim_matrix(randperm(size(prbe_stim_matrix, 1)), :);
@@ -356,6 +359,7 @@ else
                                                                                 error_type = 9;
                                                                                 else
 
+%goodmonkey(50, 'juiceline',1, 'numreward',1, 'pausetime',reward_interval, 'eventmarker',reward_eventmaker, 'nonblocking', 2);
 run_scene(scene11,stim_eventmaker);
 if ~wth11.Success
     error_type = 9;
@@ -372,6 +376,7 @@ else
             if ~wth012.Success
                 error_type = 9; % Already see twelve
             else
+                %goodmonkey(50, 'juiceline',1, 'numreward',1, 'pausetime',reward_interval, 'eventmarker',reward_eventmaker, 'nonblocking', 2);
                 run_scene(scene13,stim_eventmaker); 
                 if ~wth13.Success
                     error_type = 9; % Did not see thirteen, only see eleven and twelve
@@ -380,6 +385,7 @@ else
                     if ~wth013.Success
                         error_type = 9; % Already see thirteen
                     else
+                        %goodmonkey(50, 'juiceline',1, 'numreward',1, 'pausetime',reward_interval, 'eventmarker',reward_eventmaker, 'nonblocking', 2);
                         run_scene(scene14,stim_eventmaker);
                         if ~wth14.Success
                             error_type = 9;
@@ -404,6 +410,7 @@ else
                                             if ~wth016.Success
                                                 error_type = 9;
                                             else
+                                                %goodmonkey(50, 'juiceline',1, 'numreward',1, 'pausetime',reward_interval, 'eventmarker',reward_eventmaker, 'nonblocking', 2);
                                                 run_scene(scene17,stim_eventmaker);
                                                 if ~wth17.Success
                                                     error_type = 9;
@@ -438,7 +445,12 @@ else
                                                                                 error_type = 9;
                                                                             else
                                                                                 %goodmonkey(reward+5,'eventmarker',reward);
-                                                                                goodmonkey(reward, 'juiceline',1, 'numreward',1, 'pausetime',200, 'eventmarker',reward_eventmaker)
+                                                                                %goodmonkey(reward, 'juiceline',1, 'numreward',1, 'pausetime',200, 'eventmarker',reward_eventmaker)
+                                                                                
+                                                                                % Sample a number based on the specified probabilities_drops
+                                                                                num_juice = randsample(numbers_drops, 1, true, probabilities_drops);
+                                                                                goodmonkey(reward_duration, 'juiceline',1, 'numreward',num_juice, 'pausetime',reward_interval, 'eventmarker',reward_eventmaker, 'nonblocking', 2);
+                                                                                
                                                                                 error_type = 0; % TASK completed
                                                                             end
                                                                         end
@@ -507,7 +519,7 @@ end
 
 errors = TrialRecord.TrialErrors;
 errors_0 = errors(errors == 0);
-if length(errors_0)>100
+if length(errors_0)> 1000%100
     escape_screen();
 end
 
