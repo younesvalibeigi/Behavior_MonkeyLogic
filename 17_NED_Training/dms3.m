@@ -2,6 +2,8 @@ hotkey('q', 'escape_screen(); assignin(''caller'',''continue_'',false);');
 bhv_code(10,'Fix Cue',20,'Sample_control',21,'Sample_microstimulation1',22,'Sample_microstimulation2',...
     30,'Delay',40,'Go',50,'Reward');  % behavioral codes
 
+mouse_.showcursor(false);          % hide the mouse cursor from the subject; true, by default
+
 
 fix_eventmaker = 10;
 %sample_eventmaker = 20-control, 21-microstim1, 22-microstim2 
@@ -35,11 +37,30 @@ reward_duration = 180;
 reward_interval = 100;
 numbers_drops = [0, 1, 2, 3, 4];
 probabilities_drops = [0.00, 0.10, 0.00, 0.00 0.00];
+reward_dur_afterDelay = 0; % if 0, no reward after delay, if 
+
 
 wrongChoice_delay = 100; %1100;
 fixBreak_delay = 20;
 
-editable('fix_radius', 'hold_radius', 'sample_time', 'hold_target_time', 'reward_duration', 'reward_interval', 'probabilities_drops', 'wrongChoice_delay', 'fixBreak_delay');
+% retrive frequencies
+freq_morph0 = [1 1 1 1]; % 1st and 2nd are Most Exciting images, 3rd and 4th are Least Exciting images
+freq_morph1 = [1 1 1 1]; % First morph levels
+freq_morph2 = [1 1 1 1]; % Second morph levels
+freq_morph3 = [1 1 1 1]; % third morph levels
+freq_morph4 = [1 1 1 1]; % Last morph levels
+
+single_vs_double_choice = 'Single'; % 'Double' % This line is for training phase
+% In signle, only one choice is shown to the monkey, so monkey only need to
+% saccade, in Double, two choices is given to the monkey
+
+
+editable('fix_radius', 'hold_radius', ...
+    'sample_time', 'hold_target_time', ...
+    'reward_duration', 'reward_interval', 'probabilities_drops', 'reward_dur_afterDelay', ...
+    'wrongChoice_delay', 'fixBreak_delay', ...
+    'freq_morph0', 'freq_morph1', 'freq_morph2', 'freq_morph3', 'freq_morph4', ...
+    'single_vs_double_choice');
 bhv_variable('fix_radius', fix_radius, ...
     'hold_radius', hold_radius, ...
     'sample_time', sample_time, ...
@@ -203,7 +224,9 @@ else
     end
     
     if 0==error_type
-        goodmonkey(40, 'juiceline',1, 'numreward',1, 'pausetime',reward_interval, 'eventmarker',reward_eventmaker, 'nonblocking', 2);
+        if reward_dur_afterDelay > 0 %strcmp(reward_afterDelay, 'True')
+            goodmonkey(reward_dur_afterDelay, 'juiceline',1, 'numreward',1, 'pausetime',reward_interval, 'eventmarker',reward_eventmaker, 'nonblocking', 2);
+        end
         t_target = run_scene(scene4,go_eventmaker); % Run the fourth scene (eventmarker 40)
         if mul4.Success
             rt = mul4.RT;                % Assign rt for the reaction time graph. The same as rt = mul4.AcquiredTime - t_target;
