@@ -27,7 +27,7 @@ if isempty(initialized), initialized = false; end
 
 if ~initialized
     idx = randperm(800,2);
-    %idx = [110 336];%[164 179];%[372 665];
+    idx = [26 449];%[164 179];%[372 665];
     img1 = fullfile(img_dir, sprintf('nat_%03d.png', idx(1)));
     img2 = fullfile(img_dir, sprintf('nat_%03d.png', idx(2)));
     empty = fullfile(img_dir, 'empty.png');
@@ -188,7 +188,14 @@ elseif 0==TrialRecord.TrialErrors(end) || 5==TrialRecord.TrialErrors(end) || 9==
         disp(['contrast levels: ' num2str(prog_level(1)) ', ' num2str(prog_level(2)) ', ' num2str(prog_level(3)) ', ' num2str(prog_level(4))])
 
         % Randomly choose one conditions
-        freq = [1 1 1 1];
+        % freq = [1 1 1 1];
+
+        % Give higher probability to conditions with lower progress level
+        freq = max(prog_level) - prog_level + 1;
+        % If one condition has a lower prog_level, it means the monkey is doing worse on it.
+        % max(prog_level) - prog_level + 1 gives that weaker condition a higher weight.
+        % So weaker conditions are shown more often, and stronger ones less often.
+        % This helps all four conditions progress more evenly.
     
         prob = freq / sum(freq);      % normalize to probabilities
         idx_cond = find(rand <= cumsum(prob), 1, 'first');
