@@ -5,7 +5,7 @@ timingfile = 'dms3.m';
 userdefined_trialholder = '';
 
 persistent num_contrast_levels
-num_contrast_levels = 200;
+num_contrast_levels = 150; %200;
 
 % Pick the folder where your images are saved: <<<<<<<<<<<<<<<<<<<<<<<
 %img_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_Ned_training_1\natural_images';
@@ -27,7 +27,7 @@ if isempty(initialized), initialized = false; end
 
 if ~initialized
     idx = randperm(800,2);
-    idx = [26 449];%[164 179];%[372 665];
+    idx = [61 579];%[164 179];%[372 665];
     img1 = fullfile(img_dir, sprintf('nat_%03d.png', idx(1)));
     img2 = fullfile(img_dir, sprintf('nat_%03d.png', idx(2)));
     empty = fullfile(img_dir, 'empty.png');
