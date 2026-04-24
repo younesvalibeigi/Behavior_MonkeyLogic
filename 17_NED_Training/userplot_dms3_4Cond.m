@@ -5,11 +5,25 @@ function cond_no = userplot_dms3_4Cond(TrialRecord, MLConfig)
 
     % Initialize
     performance = nan(1,4);
+    performance_last20 = nan(1,4);
     fail_to_respond = nan(1,4);
 
     % Compute values for conditions 1 to 4
     for cond = 1:4
         cond_idx = (conditions == cond);
+        % Last 20 valid trials for this condition (only errors 0 or 5)
+        valid_idx = find(cond_idx & (errors == 0 | errors == 5));
+        last20_idx = valid_idx(max(1,end-19):end);
+        
+        if ~isempty(last20_idx)
+            n_correct_last20 = sum(errors(last20_idx) == 0);
+            n_wrong_last20   = sum(errors(last20_idx) == 5);
+            denom_last20 = n_correct_last20 + n_wrong_last20;
+        
+            if denom_last20 > 0
+                performance_last20(cond) = n_correct_last20 / denom_last20;
+            end
+        end
 
         % Counts for performance
         n_correct = sum(cond_idx & (errors == 0));
@@ -32,12 +46,13 @@ function cond_no = userplot_dms3_4Cond(TrialRecord, MLConfig)
     end
 
     % Plot grouped bars
-    data_to_plot = [performance(:), fail_to_respond(:)];
+    data_to_plot = [performance(:), performance_last20(:), fail_to_respond(:)];
     b = bar(data_to_plot, 'grouped');
 
     % Optional colors
-    b(1).FaceColor = [0 0.4470 0.7410];   % blue for performance
-    b(2).FaceColor = [0.2 0.7 0.2];       % green for fail to respond
+    b(1).FaceColor = [0 0.4470 0.7410];   % blue = overall performance
+    b(2).FaceColor = [1 0 0];             % red = last 20 valid trials performance
+    b(3).FaceColor = [0.2 0.7 0.2];       % green = fail to respond
 
     ylim([0 1]);
     xlim([0.5 4.5]);
@@ -46,7 +61,7 @@ function cond_no = userplot_dms3_4Cond(TrialRecord, MLConfig)
     xlabel('Condition');
     ylabel('Proportion');
     title('Performance and Fail-to-Respond by Condition');
-    legend({'Performance', 'Fail to respond'}, 'Location', 'best');
+    legend({'Performance', 'Performance (last 20 valid trials)', 'Fail to respond'}, 'Location', 'best');
     grid on;
 
 end

@@ -5,7 +5,7 @@ timingfile = 'dms3.m';
 userdefined_trialholder = '';
 
 persistent num_contrast_levels
-num_contrast_levels = 150; %200;
+num_contrast_levels = 75;%100;%125;%150; %200;
 
 % Pick the folder where your images are saved: <<<<<<<<<<<<<<<<<<<<<<<
 %img_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_Ned_training_1\natural_images';
@@ -27,7 +27,7 @@ if isempty(initialized), initialized = false; end
 
 if ~initialized
     idx = randperm(800,2);
-    idx = [61 579];%[164 179];%[372 665];
+    idx = [1 800];%[164 179];%[372 665];
     img1 = fullfile(img_dir, sprintf('nat_%03d.png', idx(1)));
     img2 = fullfile(img_dir, sprintf('nat_%03d.png', idx(2)));
     empty = fullfile(img_dir, 'empty.png');
@@ -199,11 +199,24 @@ elseif 0==TrialRecord.TrialErrors(end) || 5==TrialRecord.TrialErrors(end) || 9==
     
         prob = freq / sum(freq);      % normalize to probabilities
         idx_cond = find(rand <= cumsum(prob), 1, 'first');
+        
+        % find the condition(s) with the lowest progress level
+        % randomly choose only among them
+        %min_level = min(prog_level);
+        %candidate_conds = find(prog_level == min_level);
+        %disp(candidate_conds)
+        %idx_cond = candidate_conds(randi(length(candidate_conds)));
 
         TrialRecord.NextBlock = cond_progressive{idx_cond, 3}; % block number
         TrialRecord.NextCondition = cond_progressive{idx_cond,1};  % condition number
         TrialRecord.User.cond = cond_progressive(idx_cond,1:end);
     end
+
+else % if the monkey break fixation or fail to choose a choice, repeat previous condition
+    idx_cond = TrialRecord.ConditionsPlayed(end);
+    TrialRecord.NextBlock = cond_progressive{idx_cond, 3}; % block number
+    TrialRecord.NextCondition = cond_progressive{idx_cond,1};  % condition number
+    TrialRecord.User.cond = cond_progressive(idx_cond,1:end);
 
 end
 end
