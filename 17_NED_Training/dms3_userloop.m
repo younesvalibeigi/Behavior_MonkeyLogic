@@ -4,8 +4,9 @@ C = [];
 timingfile = 'dms3.m';
 userdefined_trialholder = '';
 
-persistent num_contrast_levels
-num_contrast_levels = 75;%100;%125;%150; %200;
+persistent num_contrast_levels contrast_levels
+num_contrast_levels = 100;%100;%125;%150; %200;
+contrast_levels = [50 num_contrast_levels];
 
 % Pick the folder where your images are saved: <<<<<<<<<<<<<<<<<<<<<<<
 %img_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_Ned_training_1\natural_images';
@@ -27,7 +28,7 @@ if isempty(initialized), initialized = false; end
 
 if ~initialized
     idx = randperm(800,2);
-    idx = [1 800];%[164 179];%[372 665];
+    idx = [714 630];%[164 179];%[372 665];
     img1 = fullfile(img_dir, sprintf('nat_%03d.png', idx(1)));
     img2 = fullfile(img_dir, sprintf('nat_%03d.png', idx(2)));
     empty = fullfile(img_dir, 'empty.png');
@@ -47,7 +48,7 @@ if ~initialized
     prog_img2 = make_progressive_images(img2, empty, num_contrast_levels, fullfile(progressive_img_dir, 'img2'));
 
     % Start all 4 base conditions at level 1
-    prog_level = ones(1,4);
+    prog_level = ones(1,4)*contrast_levels(1);
     
     % End initialization
     TrialRecord.User.initalCond = true;
@@ -57,11 +58,11 @@ else
 end
 
 fix = [0 0];
-sample_pos = [-3 -3];
+sample_pos = [-4 -4];%[-3 -3];
 pxperdeg = 36.039;
-sample_size = [6 6]*pxperdeg;
+sample_size = [7 7]*pxperdeg;
 spos = 10; % Saccade position
-ch_size = [6 6]*pxperdeg;
+ch_size = [8 8]*pxperdeg;
 
 % The code below selects a condition randomly according to the trial
 % frequencies
@@ -98,6 +99,15 @@ if isempty(cond_single)
     TrialRecord.NextBlock = -1;
     return
 end
+
+choice_type = TrialRecord.Editable.single_vs_double_choice;
+if strcmp(choice_type, 'Single')
+    cond = cond_single;
+elseif strcmp(choice_type, 'Double')
+    cond = cond_double;
+end
+
+
 % The first trial: Familiarization:
 if isempty(TrialRecord.TrialErrors)
     TrialRecord.NextBlock = first_cond{1, 3}; % block number
@@ -117,13 +127,13 @@ elseif 0==TrialRecord.TrialErrors(end) || 5==TrialRecord.TrialErrors(end) || 9==
 
     
 
-    % Choose which regime to use, single vs double choice
-    choice_type = TrialRecord.Editable.single_vs_double_choice;
-    if strcmp(choice_type, 'Single')
-        cond = cond_single;
-    elseif strcmp(choice_type, 'Double')
-        cond = cond_double;
-    end
+    % % Choose which regime to use, single vs double choice
+    % choice_type = TrialRecord.Editable.single_vs_double_choice;
+    % if strcmp(choice_type, 'Single')
+    %     cond = cond_single;
+    % elseif strcmp(choice_type, 'Double')
+    %     cond = cond_double;
+    % end
     
     % Defining which algorithm for bias correction
     bias_correction_type = TrialRecord.Editable.bias_correction;
@@ -168,10 +178,18 @@ elseif 0==TrialRecord.TrialErrors(end) || 5==TrialRecord.TrialErrors(end) || 9==
         % If last trial was not familiarization, update the previous condition level
         if errors(end) == 9
             cond_progressive = cond_single;
+            
+            cond_progressive{1, 11} = prog_img2{prog_level(1)};
+            cond_progressive{2, 11} = prog_img2{prog_level(1)};
+            
+            cond_progressive{3, 11} = prog_img1{prog_level(1)};
+            cond_progressive{4, 11} = prog_img1{prog_level(1)};
+            
+
         elseif errors(end) == 0
             last_cond = conditions(end);
             % Make sure you did not reach the last level
-            if prog_level(last_cond) <  num_contrast_levels
+            if prog_level(last_cond) <  contrast_levels(2) %num_contrast_levels
                 % Update the level for the last condition
                 prog_level(last_cond) = prog_level(last_cond) + 1;
                 
@@ -213,10 +231,22 @@ elseif 0==TrialRecord.TrialErrors(end) || 5==TrialRecord.TrialErrors(end) || 9==
     end
 
 else % if the monkey break fixation or fail to choose a choice, repeat previous condition
+    %idx_cond = TrialRecord.ConditionsPlayed(end);
+    %TrialRecord.NextBlock = cond_progressive{idx_cond, 3}; % block number
+    %TrialRecord.NextCondition = cond_progressive{idx_cond,1};  % condition number
+    %TrialRecord.User.cond = cond_progressive(idx_cond,1:end);
+
     idx_cond = TrialRecord.ConditionsPlayed(end);
-    TrialRecord.NextBlock = cond_progressive{idx_cond, 3}; % block number
-    TrialRecord.NextCondition = cond_progressive{idx_cond,1};  % condition number
-    TrialRecord.User.cond = cond_progressive(idx_cond,1:end);
+
+    if strcmp(TrialRecord.Editable.bias_correction, 'ProgressiveDistractorContrast')
+        TrialRecord.NextBlock = cond_progressive{idx_cond, 3};
+        TrialRecord.NextCondition = cond_progressive{idx_cond,1};
+        TrialRecord.User.cond = cond_progressive(idx_cond,1:end);
+    else
+        TrialRecord.NextBlock = cond{idx_cond, 3};
+        TrialRecord.NextCondition = cond{idx_cond,1};
+        TrialRecord.User.cond = cond(idx_cond,1:end);
+    end
 
 end
 end
@@ -265,6 +295,16 @@ function idx_cond = pick_condition_adaptive_bias(cond, TrialRecord, window_n)
         % No history yet -> equal probability
         prob = ones(1,4) / 4;
         idx_cond = find(rand <= cumsum(prob), 1, 'first');
+        disp(['Update prob: ' num2str(prob(1),'%.2f') ', ' num2str(prob(2),'%.2f') ', ' ...
+                  num2str(prob(3),'%.2f') ', ' num2str(prob(4),'%.2f')])
+        return
+    end
+
+    if numel(valid_idx) < window_n
+        prob = ones(1,4) / 4;
+        idx_cond = find(rand <= cumsum(prob), 1, 'first');
+        disp(['Update prob: ' num2str(prob(1),'%.2f') ', ' num2str(prob(2),'%.2f') ', ' ...
+                  num2str(prob(3),'%.2f') ', ' num2str(prob(4),'%.2f')])
         return
     end
 
@@ -337,7 +377,8 @@ function idx_cond = pick_condition_adaptive_bias(cond, TrialRecord, window_n)
     % Apply probability floor and renormalize
     prob = apply_probability_floor(prob, prob_floor);
 
-    disp (['Update prob: ' num2str(prob(1)) ', ' num2str(prob(2)) ', ' num2str(prob(3)) ', ' num2str(prob(4))])
+    disp(['Update prob: ' num2str(prob(1),'%.2f') ', ' num2str(prob(2),'%.2f') ', ' ...
+                  num2str(prob(3),'%.2f') ', ' num2str(prob(4),'%.2f')])
 
     % Sample condition
     idx_cond = find(rand <= cumsum(prob), 1, 'first');

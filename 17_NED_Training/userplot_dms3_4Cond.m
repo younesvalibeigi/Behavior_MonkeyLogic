@@ -61,7 +61,7 @@ function cond_no = userplot_dms3_4Cond(TrialRecord, MLConfig)
     xlabel('Condition');
     ylabel('Proportion');
     title('Performance and Fail-to-Respond by Condition');
-    legend({'Performance', 'Performance (last 20 valid trials)', 'Fail to respond'}, 'Location', 'best');
+    legend({'Per', 'Per20last', 'F'}, 'Location', 'best');
     grid on;
 
 end
