@@ -28,7 +28,7 @@ if isempty(initialized), initialized = false; end
 
 if ~initialized
     idx = randperm(800,2);
-    idx = [714 630];%[164 179];%[372 665];
+    idx = [244 245];%[164 179];%[372 665];
     img1 = fullfile(img_dir, sprintf('nat_%03d.png', idx(1)));
     img2 = fullfile(img_dir, sprintf('nat_%03d.png', idx(2)));
     empty = fullfile(img_dir, 'empty.png');

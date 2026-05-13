@@ -35,7 +35,7 @@ choice_radius = 3;
 
 reward_duration = 180;
 reward_interval = 100;
-reward_schedule_type = 'Probabilistic';%'Probabilistic' 'ConsecutiveCorrect'
+reward_schedule_type = 'Probabilistic';%'Probabilistic' 'ConsecutiveCorrect', 'SideSwitchBonus'
 
 numbers_drops = [0, 1, 2, 3, 4];
 probabilities_drops = [0.00, 0.10, 0.00, 0.00 0.00];
@@ -284,6 +284,42 @@ else
             end
             goodmonkey(reward_duration, 'juiceline',1, 'numreward',num_juice, 'pausetime',reward_interval, 'eventmarker',reward_eventmaker, 'nonblocking', 2);
 
+        elseif strcmp(reward_schedule_type, 'SideSwitchBonus')
+            errors = TrialRecord.TrialErrors;
+            conditions = TrialRecord.ConditionsPlayed;
+        
+            % Default: one drop for every correct trial
+            num_juice = 1;
+        
+            if numel(errors) >= 2
+        
+                % Previous two base conditions
+                prev2_cond = mod(conditions(end-1:end) - 1, 4) + 1;
+        
+                % Current base condition
+                curr_cond = mod(cond{1} - 1, 4) + 1;
+        
+                % Convert to side: left = 1, right = 2
+                prev2_side = 2 * ones(size(prev2_cond));
+                prev2_side(prev2_cond == 1 | prev2_cond == 3) = 1;
+        
+                curr_side = 2;
+                if curr_cond == 1 || curr_cond == 3
+                    curr_side = 1;
+                end
+        
+                % Bonus if previous 2 trials were correct, same side,
+                % and current correct trial is opposite side
+                if all(errors(end-1:end) == 0) && ...
+                        prev2_side(1) == prev2_side(2) && ...
+                        curr_side ~= prev2_side(1)
+        
+                    num_juice = 3;
+                end
+            end
+            
+            goodmonkey(reward_duration, 'juiceline',1, 'numreward',num_juice, 'pausetime',reward_interval, 'eventmarker',reward_eventmaker, 'nonblocking', 2);
+        
         end
 
                                                                                 
