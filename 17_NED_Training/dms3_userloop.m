@@ -12,7 +12,7 @@ contrast_levels = [50 num_contrast_levels];
 %img_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_Ned_training_1\natural_images';
 img_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\natural_images';
 progressive_img_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\progressive_images';
-
+img_dir2 = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\synthetic_gratings_images';
 
 % The very first call to this userloop function is made before a task
 % starts and it is for retrieving the name(s) of the timing file(s).
@@ -28,12 +28,23 @@ if isempty(initialized), initialized = false; end
 
 if ~initialized
     idx = randperm(800,2);
-    idx = [244 245];%[164 179];%[372 665];
-    img1 = fullfile(img_dir, sprintf('nat_%03d.png', idx(1)));
-    img2 = fullfile(img_dir, sprintf('nat_%03d.png', idx(2)));
+    idx = [776 700];%[164 179];%[372 665];
+    %img1 = fullfile(img_dir, sprintf('nat_%03d.png', idx(1)));
+    %img2 = fullfile(img_dir, sprintf('nat_%03d.png', idx(2)));
     empty = fullfile(img_dir, 'empty.png');
     %img3 = fullfile(img_dir, sprintf('nat_%03d.png', idx(3)));
     %img4 = fullfile(img_dir, sprintf('nat_%03d.png', idx(4)));
+
+    % Gratings
+    %img1 = fullfile(img_dir2, sprintf('cir0.png'));
+    %img2 = fullfile(img_dir2, sprintf('rad0.png'));
+
+    % Synthetic
+    idx_syn = 2;
+    img1 = fullfile(img_dir2, sprintf('lei_%03d.png', idx_syn));
+    img2 = fullfile(img_dir2, sprintf('mei_%03d.png', idx_syn));
+
+
 
     % Make 100 progressive distractor images:
     % level 1   = empty
@@ -58,9 +69,9 @@ else
 end
 
 fix = [0 0];
-sample_pos = [-4 -4];%[-3 -3];
+sample_pos = [-1 -1];%[-3 -3];
 pxperdeg = 36.039;
-sample_size = [7 7]*pxperdeg;
+sample_size = [8 8]*pxperdeg;
 spos = 10; % Saccade position
 ch_size = [8 8]*pxperdeg;
 
@@ -116,6 +127,10 @@ if isempty(TrialRecord.TrialErrors)
 
 % From the second trial the DMS task starts
 elseif 0==TrialRecord.TrialErrors(end) || 5==TrialRecord.TrialErrors(end) || 9==TrialRecord.TrialErrors(end) % TrialRecord.TrialErrors is empty at the beginning.
+    % Print the total number of trials (wrong and correct)
+    total_valid = sum(TrialRecord.TrialErrors == 0 | TrialRecord.TrialErrors == 5);
+    fprintf('total: %d, ', total_valid);
+    
     % Userloop does not need the block and condition numbers. This is just
     % for your record keeping.
 %     TrialRecord.NextBlock = cond{1,1};      % block number
