@@ -28,7 +28,7 @@ if isempty(initialized), initialized = false; end
 
 if ~initialized
     idx = randperm(800,2);
-    idx = [776 700];%[164 179];%[372 665];
+    idx = [54 70];%[164 179];%[372 665];
     %img1 = fullfile(img_dir, sprintf('nat_%03d.png', idx(1)));
     %img2 = fullfile(img_dir, sprintf('nat_%03d.png', idx(2)));
     empty = fullfile(img_dir, 'empty.png');
@@ -36,13 +36,13 @@ if ~initialized
     %img4 = fullfile(img_dir, sprintf('nat_%03d.png', idx(4)));
 
     % Gratings
-    %img1 = fullfile(img_dir2, sprintf('cir0.png'));
-    %img2 = fullfile(img_dir2, sprintf('rad0.png'));
+    img1 = fullfile(img_dir2, sprintf('cir0.png'));
+    img2 = fullfile(img_dir2, sprintf('rad0.png'));
 
     % Synthetic
     idx_syn = 2;
-    img1 = fullfile(img_dir2, sprintf('lei_%03d.png', idx_syn));
-    img2 = fullfile(img_dir2, sprintf('mei_%03d.png', idx_syn));
+    %img1 = fullfile(img_dir2, sprintf('lei_%03d.png', idx_syn));
+    %img2 = fullfile(img_dir2, sprintf('mei_%03d.png', idx_syn));
 
 
 
@@ -153,6 +153,7 @@ elseif 0==TrialRecord.TrialErrors(end) || 5==TrialRecord.TrialErrors(end) || 9==
     % Defining which algorithm for bias correction
     bias_correction_type = TrialRecord.Editable.bias_correction;
     if strcmp(bias_correction_type, 'None') % show each condition randomly
+        disp('-')
     
         % Randomly pick a condition
         %idx_cond = randi(num_cond);

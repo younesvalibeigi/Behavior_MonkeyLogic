@@ -20,12 +20,13 @@ else, error('This demo requires eye or joystick input. Please set it up or turn 
 end
 
 % define time intervals (in ms):
-learn_time = 10000; % 10000
+familiarization_time = 10000; % 10000
 wait_for_fix = 20000; %5000;
 initial_fix = 500;
 sample_time = 1000;
 delay_range_ms = [250, 500]; % original, but it could be defferent through editable
 delay = randi([delay_range_ms(1), delay_range_ms(2)]); %700; % random 200-500 ms --> saccade delay (monkey should  not predict time), super saccade
+prechoice_fix_time = 50;  % ms
 max_reaction_time = 3000;
 hold_target_time = 50; %500; % for arya is 800
 
@@ -36,7 +37,7 @@ choice_radius = 3;
 
 reward_duration = 180;
 reward_interval = 100;
-reward_schedule_type = 'Probabilistic';%'Probabilistic' 'ConsecutiveCorrect', 'SideSwitchBonus'
+reward_schedule_type = 'Probabilistic'; %'Probabilistic' 'ConsecutiveCorrect', 'SideSwitchBonus'
 
 numbers_drops = [0, 1, 2, 3, 4];
 probabilities_drops = [0.00, 0.10, 0.00, 0.00 0.00];
@@ -66,7 +67,7 @@ bias_correction = 'None';
 % over 100 steps everytime the monkey get that condition right
 
 editable('fix_radius', 'hold_radius', 'choice_radius', ...
-    'sample_time', 'delay_range_ms', 'hold_target_time', ...
+    'sample_time', 'delay_range_ms', 'prechoice_fix_time', 'hold_target_time', ...
     'reward_duration', 'reward_interval', 'reward_schedule_type', 'probabilities_drops', 'reward_dur_afterDelay', ...
     'wrongChoice_delay', 'fixBreak_delay', 'earlySaccade_delay', ...
     'freq_morph0', 'freq_morph1', 'freq_morph2', 'freq_morph3', 'freq_morph4', ...
@@ -78,6 +79,7 @@ bhv_variable('fix_radius', fix_radius, ...
     'sample_time', sample_time, ...
     'delay_time', delay, ...
     'delay_range_ms', delay_range_ms, ...
+    'prechoice_fix_time', prechoice_fix_time, ...
     'hold_target_time', hold_target_time, ...
     'reward_duration', reward_duration, ...
     'reward_interval', reward_interval, ...
@@ -116,14 +118,14 @@ targets_distractor.List = { cond{8}, cond{9}, cond{10};  % The 1st image is the 
 
 
 
-% familiarization: show BOTH choice images for learn_time (same positions)
+% familiarization: show BOTH choice images for familiarization_time (same positions)
 learn_targets = ImageGraphic(null_);
 learn_targets.List = { cond{8}, [-6 0], cond{10};  % The 1st image is the target.
     cond{11}, [6 0], cond{13} };             % The 2nd one is the distractor.
 
 % scene 0: familiarization (time only)
 tc0 = TimeCounter(null_);
-tc0.Duration = learn_time;
+tc0.Duration = familiarization_time;
 con0 = Concurrent(tc0);
 con0.add(learn_targets);
 scene0 = create_scene(con0);
@@ -183,14 +185,25 @@ wth3.WaitTime = 0;
 wth3.HoldTime = delay;
 scene3 = create_scene(wth3);
 
-% scene 4: choice
-mul4 = MultiTarget(tracker);
-mul4.Target = targets_distractor;
-mul4.Threshold = choice_radius;%fix_radius;
-mul4.WaitTime = max_reaction_time;
-mul4.HoldTime = hold_target_time;
-mul4.TurnOffUnchosen = true;        % Determine whether to turn off the unchosen targets when one of the targets is chosen.
-scene4 = create_scene(mul4);
+% scene 4: choices (target and distractor) appear, but fixation is still required
+fix4 = SingleTarget(tracker);
+fix4.Target = fixation_point;
+fix4.Threshold = hold_radius;   % or fix_radius if you want stricter fixation
+wth4 = WaitThenHold(fix4);
+wth4.WaitTime = 0;
+wth4.HoldTime = prechoice_fix_time;
+con4 = Concurrent(wth4);
+con4.add(targets_distractor);   % show target and distractor while fixation remains required
+scene4 = create_scene(con4);
+
+% scene 5: choice
+mul5 = MultiTarget(tracker);
+mul5.Target = targets_distractor;
+mul5.Threshold = choice_radius;%fix_radius;
+mul5.WaitTime = max_reaction_time;
+mul5.HoldTime = hold_target_time;
+mul5.TurnOffUnchosen = false; %true;        % Determine whether to turn off the unchosen targets when one of the targets is chosen. true: turn off, false: keep the image
+scene5 = create_scene(mul5);
 
 % Familiarization ONCE per run (robust)
 fam_done = TrialRecord.User.initalCond;
@@ -214,6 +227,8 @@ else
     % 5: choosing the distractor
     % 6: choosing neither the distractor nor the target
     % 7: breaking the fixation on target or distractor
+    % 8: early saccade / fixation break before go cue while choices are
+    % presented
     error_type = 0;
     
     run_scene(scene1,fix_eventmaker); % Run the first scene (eventmaker 10)
@@ -238,19 +253,29 @@ else
             error_type = 4;%3; % break fixation (4)
         end
     end
+
+    % Scene 4: choices visible, but monkey must keep fixation
+    if prechoice_fix_time > 0
+        if 0==error_type
+            run_scene(scene4,go_eventmaker);
+            if ~wth4.Success
+                error_type = 8;   % early saccade / fixation break before go cue
+            end
+        end
+    end
     
     if 0==error_type
         if reward_dur_afterDelay > 0 %strcmp(reward_afterDelay, 'True')
             goodmonkey(reward_dur_afterDelay, 'juiceline',1, 'numreward',1, 'pausetime',reward_interval, 'eventmarker',reward_eventmaker, 'nonblocking', 2);
         end
-        t_target = run_scene(scene4,go_eventmaker); % Run the fourth scene (eventmarker 40)
-        if mul4.Success
-            rt = mul4.RT;                % Assign rt for the reaction time graph. The same as rt = mul4.AcquiredTime - t_target;
-            if 1~=mul4.ChosenTarget  % Image 1 is target; Image 2 is distractor.
+        t_target = run_scene(scene5,go_eventmaker); % Run the fourth scene (eventmarker 40)
+        if mul5.Success
+            rt = mul5.RT;                % Assign rt for the reaction time graph. The same as rt = mul5.AcquiredTime - t_target;
+            if 1~=mul5.ChosenTarget  % Image 1 is target; Image 2 is distractor.
                 error_type = 5;      % One of the images was selected, but it was an incorrect choice.
             end
         else                       % The failure of MultiTarget means that none of the targets was chosen.
-            if mul4.Waiting         % If we were waiting for the target selection (in other words, the gaze did not 
+            if mul5.Waiting         % If we were waiting for the target selection (in other words, the gaze did not 
                 error_type = 6;%2;     % land on either the target or distractor), it is a "late response (6)" error.
             else
                 error_type = 7;%3;   % Otherwise, the fixation is broken (7) and the choice was not held to the end.
@@ -331,7 +356,7 @@ else
         idle(wrongChoice_delay);  %100 %Previously 1100              % Clear screens
     elseif 3 == error_type % Break fixation during sample  
         idle(fixBreak_delay) %20 % 2000 previously
-    elseif 4 == error_type % Jump to saccade before target show up (Train the monkey to be patient)
+    elseif 4 == error_type || 8 == error_type % Jump to saccade before target show up (Train the monkey to be patient)
         idle(earlySaccade_delay) 
     else
         idle(0)
