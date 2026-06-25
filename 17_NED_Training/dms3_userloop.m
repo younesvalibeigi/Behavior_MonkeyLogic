@@ -13,6 +13,7 @@ contrast_levels = [50 num_contrast_levels];
 img_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\natural_images';
 progressive_img_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\progressive_images';
 img_dir2 = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\synthetic_gratings_images';
+img_dir3 = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\synthetic_img_alexnet_conv3_2026-06-19_15-52-44';
 
 % The very first call to this userloop function is made before a task
 % starts and it is for retrieving the name(s) of the timing file(s).
@@ -28,7 +29,7 @@ if isempty(initialized), initialized = false; end
 
 if ~initialized
     idx = randperm(800,2);
-    idx = [54 70];%[164 179];%[372 665];
+    idx = [674 709];%[164 179];%[372 665];
     %img1 = fullfile(img_dir, sprintf('nat_%03d.png', idx(1)));
     %img2 = fullfile(img_dir, sprintf('nat_%03d.png', idx(2)));
     empty = fullfile(img_dir, 'empty.png');
@@ -36,13 +37,15 @@ if ~initialized
     %img4 = fullfile(img_dir, sprintf('nat_%03d.png', idx(4)));
 
     % Gratings
-    img1 = fullfile(img_dir2, sprintf('cir0.png'));
-    img2 = fullfile(img_dir2, sprintf('rad0.png'));
+    %img1 = fullfile(img_dir2, sprintf('cir0.png'));
+    %img2 = fullfile(img_dir2, sprintf('rad0.png'));
 
     % Synthetic
-    idx_syn = 2;
+    idx_syn = 5;
     %img1 = fullfile(img_dir2, sprintf('lei_%03d.png', idx_syn));
     %img2 = fullfile(img_dir2, sprintf('mei_%03d.png', idx_syn));
+    img1 = fullfile(img_dir3, sprintf('%d_LEI.png', idx_syn));
+    img2 = fullfile(img_dir3, sprintf('%d_MEI.png', idx_syn));
 
 
 
@@ -69,7 +72,7 @@ else
 end
 
 fix = [0 0];
-sample_pos = [-1 -1];%[-3 -3];
+sample_pos = [-2 -2];%[-3 -3];
 pxperdeg = 36.039;
 sample_size = [8 8]*pxperdeg;
 spos = 10; % Saccade position
@@ -173,7 +176,7 @@ elseif 0==TrialRecord.TrialErrors(end) || 5==TrialRecord.TrialErrors(end) || 9==
         
     elseif strcmp(bias_correction_type, 'AdaptiveBiasCorrection')
         % Adaptive bias-correction sampling
-        window_n = 32; % on average 8 sample per condition
+        window_n = 60; % on average 8 sample per condition
         idx_cond = pick_condition_adaptive_bias(cond, TrialRecord, window_n);
 
         TrialRecord.NextBlock = cond{idx_cond, 3}; % block number
