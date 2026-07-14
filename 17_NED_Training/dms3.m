@@ -30,6 +30,16 @@ prechoice_fix_time = 50;  % ms
 max_reaction_time = 3000;
 hold_target_time = 50; %500; % for arya is 800
 
+% If previous trial was early saccade, reuse previous trial's delay_time
+% This is added becuase the monkey learns to do early saccade until get a
+% trial with short delay period
+if ~isempty(TrialRecord.TrialErrors) && ismember(TrialRecord.TrialErrors(end), [4 8])
+   delay = TrialRecord.User.delay_previous;
+   disp('Early saccade detected')
+end
+% Store current delay for the next trial
+TrialRecord.User.delay_previous = delay;
+
 % fixation window (in degrees):
 fix_radius = 1.9;
 hold_radius = 2.5;

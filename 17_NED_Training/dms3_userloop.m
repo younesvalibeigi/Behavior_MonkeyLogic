@@ -13,7 +13,7 @@ contrast_levels = [50 num_contrast_levels];
 img_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\natural_images';
 progressive_img_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\progressive_images';
 img_dir2 = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\synthetic_gratings_images';
-img_dir3 = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\synthetic_img_alexnet_conv3_2026-06-19_15-52-44';
+img_dir3 = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\synthetic_img_alexnet_relu3_2026-07-11_11-52-23';
 
 % The very first call to this userloop function is made before a task
 % starts and it is for retrieving the name(s) of the timing file(s).
@@ -29,7 +29,7 @@ if isempty(initialized), initialized = false; end
 
 if ~initialized
     idx = randperm(800,2);
-    idx = [674 709];%[164 179];%[372 665];
+    idx = [315 446];%[164 179];%[372 665];
     %img1 = fullfile(img_dir, sprintf('nat_%03d.png', idx(1)));
     %img2 = fullfile(img_dir, sprintf('nat_%03d.png', idx(2)));
     empty = fullfile(img_dir, 'empty.png');
@@ -37,15 +37,15 @@ if ~initialized
     %img4 = fullfile(img_dir, sprintf('nat_%03d.png', idx(4)));
 
     % Gratings
-    %img1 = fullfile(img_dir2, sprintf('cir0.png'));
-    %img2 = fullfile(img_dir2, sprintf('rad0.png'));
+    img1 = fullfile(img_dir2, sprintf('cir0.png'));
+    img2 = fullfile(img_dir2, sprintf('rad0.png'));
 
     % Synthetic
-    idx_syn = 5;
+    idx_syn = 79;
     %img1 = fullfile(img_dir2, sprintf('lei_%03d.png', idx_syn));
     %img2 = fullfile(img_dir2, sprintf('mei_%03d.png', idx_syn));
-    img1 = fullfile(img_dir3, sprintf('%d_LEI.png', idx_syn));
-    img2 = fullfile(img_dir3, sprintf('%d_MEI.png', idx_syn));
+    %img1 = fullfile(img_dir3, sprintf('%d_LEI.png', idx_syn));
+    %img2 = fullfile(img_dir3, sprintf('%d_MEI.png', idx_syn));
 
 
 
@@ -71,11 +71,12 @@ else
     TrialRecord.User.initalCond = false;
 end
 
-fix = [0 0];
-sample_pos = [-2 -2];%[-3 -3];
+fix = [0 3];
+sample_pos = [-4.5+fix(1) -4.5+fix(2)];%[-3 -3];
 pxperdeg = 36.039;
 sample_size = [8 8]*pxperdeg;
-spos = 10; % Saccade position
+spos_x = 10; % Saccade position
+spos_y = fix(2);
 ch_size = [8 8]*pxperdeg;
 
 % The code below selects a condition randomly according to the trial
@@ -88,17 +89,17 @@ persistent cond_single cond_double cond_progressive
 if 0==TrialRecord.CurrentTrialNumber  % run only once
     % Conditions = {cond_num, frequency, block_num, fix, sample, sample_pos,
     % sample_size, target, target_pos, target_size, distractor, distractor_pos, distractor_size}
-    first_cond = {  1, 1, 1, fix, img1, sample_pos, sample_size, img1, [-spos 0], ch_size, img2, [spos 0],  ch_size};
+    first_cond = {  1, 1, 1, fix, img1, sample_pos, sample_size, img1, [-spos_x spos_y], ch_size, img2, [spos_x spos_y],  ch_size};
 
-    Conditions_doubleChoice = {  1, 1, 1, fix, img1, sample_pos, sample_size, img1, [-spos 0], ch_size, img2, [spos 0],  ch_size; 
-                    2, 1, 1, fix, img1, sample_pos, sample_size, img1, [spos 0], ch_size,  img2, [-spos 0],  ch_size;
-                    3, 1, 1, fix, img2, sample_pos, sample_size, img2, [-spos 0], ch_size,  img1, [spos 0],  ch_size;
-                    4, 1, 1, fix, img2, sample_pos, sample_size, img2, [spos 0], ch_size,  img1, [-spos 0],  ch_size;
+    Conditions_doubleChoice = {  1, 1, 1, fix, img1, sample_pos, sample_size, img1, [-spos_x spos_y], ch_size, img2, [spos_x spos_y],  ch_size; 
+                    2, 1, 1, fix, img1, sample_pos, sample_size, img1, [spos_x spos_y], ch_size,  img2, [-spos_x spos_y],  ch_size;
+                    3, 1, 1, fix, img2, sample_pos, sample_size, img2, [-spos_x spos_y], ch_size,  img1, [spos_x spos_y],  ch_size;
+                    4, 1, 1, fix, img2, sample_pos, sample_size, img2, [spos_x spos_y], ch_size,  img1, [-spos_x spos_y],  ch_size;
                     };
-    Conditions_singleChoice = {  1, 1, 1, fix, img1, sample_pos, sample_size, img1, [-spos 0], ch_size, empty, [spos 0],  ch_size; 
-                    2, 1, 1, fix, img1, sample_pos, sample_size, img1, [spos 0], ch_size,  empty, [-spos 0],  ch_size;
-                    3, 1, 1, fix, img2, sample_pos, sample_size, img2, [-spos 0], ch_size,  empty, [spos 0],  ch_size;
-                    4, 1, 1, fix, img2, sample_pos, sample_size, img2, [spos 0], ch_size,  empty, [-spos 0],  ch_size;
+    Conditions_singleChoice = {  1, 1, 1, fix, img1, sample_pos, sample_size, img1, [-spos_x spos_y], ch_size, empty, [spos_x spos_y],  ch_size; 
+                    2, 1, 1, fix, img1, sample_pos, sample_size, img1, [spos_x spos_y], ch_size,  empty, [-spos_x spos_y],  ch_size;
+                    3, 1, 1, fix, img2, sample_pos, sample_size, img2, [-spos_x spos_y], ch_size,  empty, [spos_x spos_y],  ch_size;
+                    4, 1, 1, fix, img2, sample_pos, sample_size, img2, [spos_x spos_y], ch_size,  empty, [-spos_x spos_y],  ch_size;
                     };
     
  
@@ -176,12 +177,27 @@ elseif 0==TrialRecord.TrialErrors(end) || 5==TrialRecord.TrialErrors(end) || 9==
         
     elseif strcmp(bias_correction_type, 'AdaptiveBiasCorrection')
         % Adaptive bias-correction sampling
-        window_n = 60; % on average 8 sample per condition
+        window_n = 40; % on average 8 sample per condition
         idx_cond = pick_condition_adaptive_bias(cond, TrialRecord, window_n);
 
         TrialRecord.NextBlock = cond{idx_cond, 3}; % block number
         TrialRecord.NextCondition = cond{idx_cond,1};  % condition number
         TrialRecord.User.cond = cond(idx_cond,1:end);
+
+    elseif strcmp(bias_correction_type, 'BlockwiseAdaptiveBiasCorrection')
+        % Recalculate probabilities after every window_n valid trials
+        window_n = 20;
+    
+        [idx_cond, prob] = pick_condition_blockwise_adaptive_bias( ...
+            cond, TrialRecord, window_n);
+    
+        % Save probabilities in the main TrialRecord structure
+        TrialRecord.User.bias_prob = prob;
+
+        TrialRecord.NextBlock = cond{idx_cond, 3}; % block number
+        TrialRecord.NextCondition = cond{idx_cond,1};  % condition number
+        TrialRecord.User.cond = cond(idx_cond,1:end);
+
 
     elseif strcmp(bias_correction_type, 'ProgressiveDistractorContrast')
 
@@ -390,16 +406,149 @@ function idx_cond = pick_condition_adaptive_bias(cond, TrialRecord, window_n)
         w = ones(1,4);
     end
 
-    % Normalize
+%if mod(TrialRecord.CurrentTrialNumber, window_n) == 0
+        % Normalize
     prob = w / sum(w);
 
     % Apply probability floor and renormalize
     prob = apply_probability_floor(prob, prob_floor);
 
+    % save the probabilities
+    %TrialRecord.User.prob = prob;
+
     disp(['Update prob: ' num2str(prob(1),'%.2f') ', ' num2str(prob(2),'%.2f') ', ' ...
-                  num2str(prob(3),'%.2f') ', ' num2str(prob(4),'%.2f')])
+              num2str(prob(3),'%.2f') ', ' num2str(prob(4),'%.2f')])
+%else
+    %prob = TrialRecord.User.prob;
+%end
 
     % Sample condition
+    idx_cond = find(rand <= cumsum(prob), 1, 'first');
+
+    if isempty(idx_cond)
+        idx_cond = randi(4);
+    end
+end
+
+function [idx_cond, prob] = pick_condition_blockwise_adaptive_bias( ...
+    cond, TrialRecord, window_n)
+
+% Blockwise adaptive bias-correcting sampler.
+%
+% Probabilities are recalculated only after every window_n valid trials.
+% Between updates, the previously calculated probabilities are reused.
+%
+% Valid outcomes:
+%   TrialError 0 = correct
+%   TrialError 5 = incorrect choice
+
+    conditions = TrialRecord.ConditionsPlayed;
+    errors = TrialRecord.TrialErrors;
+
+    alpha_side = 0.8;
+    alpha_stim = 0.8;
+    alpha_ind  = 0.4;
+    prob_floor = 0.10;
+
+    % Valid trials used for performance estimation
+    valid_idx = find( ...
+        (errors == 0 | errors == 5) & ...
+        conditions >= 1 & conditions <= 4);
+
+    n_valid = numel(valid_idx);
+
+    % Before the first complete window, use equal probabilities
+    if n_valid < window_n
+        prob = ones(1,4) / 4;
+
+        disp(['Using initial probabilities: ' ...
+            num2str(prob(1),'%.2f') ', ' ...
+            num2str(prob(2),'%.2f') ', ' ...
+            num2str(prob(3),'%.2f') ', ' ...
+            num2str(prob(4),'%.2f')]);
+
+    % Update only at 40, 80, 120, ... valid trials
+    elseif mod(n_valid, window_n) == 0
+
+        % Use only the most recent complete window
+        recent_idx = valid_idx(end-window_n+1:end);
+
+        cond_hist = conditions(recent_idx);
+        err_hist  = errors(recent_idx);
+
+        perf = zeros(1,4);
+
+        for c = 1:4
+            n_correct = sum(cond_hist == c & err_hist == 0);
+            n_wrong   = sum(cond_hist == c & err_hist == 5);
+
+            % Laplace-smoothed performance
+            perf(c) = (n_correct + 1) / ...
+                      (n_correct + n_wrong + 2);
+        end
+
+        side_perf = [
+            mean([perf(1), perf(3)]), ...
+            mean([perf(2), perf(4)])
+        ];
+
+        stim_perf = [
+            mean([perf(1), perf(2)]), ...
+            mean([perf(3), perf(4)])
+        ];
+
+        side_need = 1 - side_perf;
+        stim_need = 1 - stim_perf;
+        ind_need  = 1 - perf;
+
+        side_factor = side_need / mean(side_need);
+        stim_factor = stim_need / mean(stim_need);
+        ind_factor  = ind_need  / mean(ind_need);
+
+        side_factor = 1 + alpha_side * (side_factor - 1);
+        stim_factor = 1 + alpha_stim * (stim_factor - 1);
+        ind_factor  = 1 + alpha_ind  * (ind_factor  - 1);
+
+        w = zeros(1,4);
+
+        w(1) = stim_factor(1) * side_factor(1) * ind_factor(1);
+        w(2) = stim_factor(1) * side_factor(2) * ind_factor(2);
+        w(3) = stim_factor(2) * side_factor(1) * ind_factor(3);
+        w(4) = stim_factor(2) * side_factor(2) * ind_factor(4);
+
+        if any(~isfinite(w)) || all(w <= 0)
+            w = ones(1,4);
+        end
+
+        prob = w / sum(w);
+        prob = apply_probability_floor(prob, prob_floor);
+
+        % disp(['Updated probabilities after ' ...
+        %     num2str(n_valid) ' valid trials: ' ...
+        %     num2str(prob(1),'%.2f') ', ' ...
+        %     num2str(prob(2),'%.2f') ', ' ...
+        %     num2str(prob(3),'%.2f') ', ' ...
+        %     num2str(prob(4),'%.2f')]);
+        disp(['Update prob: ' num2str(prob(1),'%.2f') ', ' num2str(prob(2),'%.2f') ', ' ...
+                  num2str(prob(3),'%.2f') ', ' num2str(prob(4),'%.2f')])
+
+    else
+        % Between update points, reuse the previous probabilities
+        if isfield(TrialRecord.User, 'bias_prob') && ...
+                numel(TrialRecord.User.bias_prob) == 4
+
+            prob = TrialRecord.User.bias_prob;
+            disp(['Update prob: ' num2str(prob(1),'%.2f') ', ' num2str(prob(2),'%.2f') ', ' ...
+                  num2str(prob(3),'%.2f') ', ' num2str(prob(4),'%.2f')])
+        else
+            % Safety fallback
+            prob = ones(1,4) / 4;
+            disp(['Update prob: ' num2str(prob(1),'%.2f') ', ' num2str(prob(2),'%.2f') ', ' ...
+                  num2str(prob(3),'%.2f') ', ' num2str(prob(4),'%.2f')])
+        end
+    end
+
+    % Sample the next condition using the current probabilities
     idx_cond = find(rand <= cumsum(prob), 1, 'first');
 
     if isempty(idx_cond)

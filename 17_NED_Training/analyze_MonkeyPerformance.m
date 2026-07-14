@@ -1,5 +1,5 @@
-folder_path = '\\SpikeVault\Younes\NED\Training\3_AdaptiveBiasCorrection';
-
+%folder_path = '\\SpikeVault\Younes\NED\Training\3_AdaptiveBiasCorrection';
+folder_path = '\\SpikeVault\Younes\Arya\4_Recording_contrastLevel_microstimulation\DMS_Training_2024';
 % Get all .bhv2 files
 files = dir(fullfile(folder_path, '*.bhv2'));
 
@@ -15,8 +15,16 @@ for i = 1:length(files)
     % Load bhv2 file
     beh = mlread(filename);
 
-    % Extract TrialError
+    % Extract condition number and trial errors
+    conditions = [beh.Condition];      % If this gives an error, use [beh.ConditionNumber]
     trial_errors = [beh.TrialError];
+
+    % Keep only the first 4 conditions
+    idx = conditions <= 4;
+    
+    % Select those trials
+    trial_errors = trial_errors(idx);
+
 
     % Keep only correct and wrong-choice trials
     valid_errors = trial_errors(trial_errors == 0 | trial_errors == 5);
