@@ -4,9 +4,23 @@ C = [];
 timingfile = 'dms3.m';
 userdefined_trialholder = '';
 
+% Parameters of ProgressiveDistractorContrast
 persistent num_contrast_levels contrast_levels
 num_contrast_levels = 100;%100;%125;%150; %200;
 contrast_levels = [50 num_contrast_levels];
+
+% Parameters for StaircaseContrast
+persistent staircase_level staircase_correct staircase_total
+if isempty(staircase_level)
+    staircase_level    = 40;   % starting contrast (%)
+    staircase_correct  = 0;
+    staircase_total    = 0;
+end
+
+staircase_step       = 10;   % contrast increase per level-up
+staircase_max        = 100;  % max contrast
+staircase_threshold  = 0.8;  % accuracy required to advance
+staircase_min_trials = 20;   % min trials at current level before advancing
 
 % Pick the folder where your images are saved: <<<<<<<<<<<<<<<<<<<<<<<
 %img_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_Ned_training_1\natural_images';
@@ -41,7 +55,7 @@ if ~initialized
     img2 = fullfile(img_dir2, sprintf('rad0.png'));
 
     % Synthetic
-    idx_syn = 79;
+    idx_syn = 95;
     %img1 = fullfile(img_dir2, sprintf('lei_%03d.png', idx_syn));
     %img2 = fullfile(img_dir2, sprintf('mei_%03d.png', idx_syn));
     %img1 = fullfile(img_dir3, sprintf('%d_LEI.png', idx_syn));
@@ -72,7 +86,7 @@ else
 end
 
 fix = [0 3];
-sample_pos = [-4.5+fix(1) -4.5+fix(2)];%[-3 -3];
+sample_pos = [-4+fix(1) -3+fix(2)];%[-3 -3];
 pxperdeg = 36.039;
 sample_size = [8 8]*pxperdeg;
 spos_x = 10; % Saccade position
@@ -177,16 +191,25 @@ elseif 0==TrialRecord.TrialErrors(end) || 5==TrialRecord.TrialErrors(end) || 9==
         
     elseif strcmp(bias_correction_type, 'AdaptiveBiasCorrection')
         % Adaptive bias-correction sampling
-        window_n = 40; % on average 8 sample per condition
+        window_n = 80; % on average 8 sample per condition
         idx_cond = pick_condition_adaptive_bias(cond, TrialRecord, window_n);
 
         TrialRecord.NextBlock = cond{idx_cond, 3}; % block number
         TrialRecord.NextCondition = cond{idx_cond,1};  % condition number
         TrialRecord.User.cond = cond(idx_cond,1:end);
 
+     elseif strcmp(bias_correction_type, 'EMA_AdaptiveBiasCorrection')
+        [idx_cond, prob] = pick_condition_EMA_adaptive_bias(cond, TrialRecord);
+
+        TrialRecord.User.bias_prob = prob;
+
+        TrialRecord.NextBlock = cond{idx_cond, 3};
+        TrialRecord.NextCondition = cond{idx_cond,1};
+        TrialRecord.User.cond = cond(idx_cond,1:end);
+
     elseif strcmp(bias_correction_type, 'BlockwiseAdaptiveBiasCorrection')
         % Recalculate probabilities after every window_n valid trials
-        window_n = 20;
+        window_n = 80;
     
         [idx_cond, prob] = pick_condition_blockwise_adaptive_bias( ...
             cond, TrialRecord, window_n);
@@ -263,7 +286,52 @@ elseif 0==TrialRecord.TrialErrors(end) || 5==TrialRecord.TrialErrors(end) || 9==
         TrialRecord.NextBlock = cond_progressive{idx_cond, 3}; % block number
         TrialRecord.NextCondition = cond_progressive{idx_cond,1};  % condition number
         TrialRecord.User.cond = cond_progressive(idx_cond,1:end);
+    
+    elseif strcmp(bias_correction_type, 'StaircaseContrast')
+
+        % Update staircase counters based on the outcome of the trial just completed
+        if ~isempty(TrialRecord.TrialErrors)
+            last_err  = TrialRecord.TrialErrors(end);
+            last_cond = TrialRecord.ConditionsPlayed(end);
+            if (last_err == 0 || last_err == 5) && last_cond >= 1 && last_cond <= 4
+                staircase_total = staircase_total + 1;
+                if last_err == 0
+                    staircase_correct = staircase_correct + 1;
+                end
+            end
+        end
+
+        % Check whether performance at the current level is good enough to advance
+        if staircase_total >= staircase_min_trials
+            acc = staircase_correct / staircase_total;
+            if acc >= staircase_threshold && staircase_level < staircase_max
+                staircase_level = min(staircase_level + staircase_step, staircase_max);
+                staircase_correct = 0;
+                staircase_total   = 0;
+                fprintf('Staircase: advancing to %d%% contrast (acc was %.2f)\n', staircase_level, acc);
+            else
+                fprintf('Staircase: holding at %d%% contrast (acc %.2f, n=%d)\n', staircase_level, acc, staircase_total);
+            end
+        end
+
+        % Apply the current contrast level to the distractor in all 4 conditions
+        cond_staircase = cond_single;
+        cond_staircase{1,11} = prog_img2{staircase_level};
+        cond_staircase{2,11} = prog_img2{staircase_level};
+        cond_staircase{3,11} = prog_img1{staircase_level};
+        cond_staircase{4,11} = prog_img1{staircase_level};
+
+        % Equal-frequency condition selection (this mode targets contrast, not side/stim bias)
+        idx_cond = randi(4);
+
+        TrialRecord.NextBlock     = cond_staircase{idx_cond, 3};
+        TrialRecord.NextCondition = cond_staircase{idx_cond,1};
+        TrialRecord.User.cond     = cond_staircase(idx_cond,1:end);
+
+        TrialRecord.User.staircase_level = staircase_level;   % for logging/inspection
+    
     end
+
 
 else % if the monkey break fixation or fail to choose a choice, repeat previous condition
     %idx_cond = TrialRecord.ConditionsPlayed(end);
@@ -277,6 +345,16 @@ else % if the monkey break fixation or fail to choose a choice, repeat previous 
         TrialRecord.NextBlock = cond_progressive{idx_cond, 3};
         TrialRecord.NextCondition = cond_progressive{idx_cond,1};
         TrialRecord.User.cond = cond_progressive(idx_cond,1:end);
+    elseif strcmp(TrialRecord.Editable.bias_correction, 'StaircaseContrast')
+        cond_staircase = cond_single;
+        cond_staircase{1,11} = prog_img2{staircase_level};
+        cond_staircase{2,11} = prog_img2{staircase_level};
+        cond_staircase{3,11} = prog_img1{staircase_level};
+        cond_staircase{4,11} = prog_img1{staircase_level};
+
+        TrialRecord.NextBlock = cond_staircase{idx_cond, 3};
+        TrialRecord.NextCondition = cond_staircase{idx_cond,1};
+        TrialRecord.User.cond = cond_staircase(idx_cond,1:end);
     else
         TrialRecord.NextBlock = cond{idx_cond, 3};
         TrialRecord.NextCondition = cond{idx_cond,1};
@@ -320,6 +398,7 @@ function idx_cond = pick_condition_adaptive_bias(cond, TrialRecord, window_n)
     alpha_stim = 0.8;  % strength of stimulus-bias correction
     alpha_ind  = 0.4;  % mild boost for weak individual conditions
     prob_floor = 0.10; % minimum probability per condition
+    prob_ceil  = 0.40; % maximum probability per condition
 
     % ------------------------------------------------------------
     % Keep only valid trials for performance estimation
@@ -345,6 +424,7 @@ function idx_cond = pick_condition_adaptive_bias(cond, TrialRecord, window_n)
 
     % Use recent valid trials only
     valid_idx = valid_idx(max(1, end-window_n+1):end);
+   
 
     cond_hist = conditions(valid_idx);
     err_hist  = errors(valid_idx);
@@ -395,11 +475,20 @@ function idx_cond = pick_condition_adaptive_bias(cond, TrialRecord, window_n)
     % cond2 = A-right
     % cond3 = B-left
     % cond4 = B-right
+
+    % w = zeros(1,4);
+    % w(1) = stim_factor(1) * side_factor(1) * ind_factor(1);
+    % w(2) = stim_factor(1) * side_factor(2) * ind_factor(2);
+    % w(3) = stim_factor(2) * side_factor(1) * ind_factor(3);
+    % w(4) = stim_factor(2) * side_factor(2) * ind_factor(4);
+
     w = zeros(1,4);
-    w(1) = stim_factor(1) * side_factor(1) * ind_factor(1);
-    w(2) = stim_factor(1) * side_factor(2) * ind_factor(2);
-    w(3) = stim_factor(2) * side_factor(1) * ind_factor(3);
-    w(4) = stim_factor(2) * side_factor(2) * ind_factor(4);
+    w(1) = 1 + alpha_stim*(stim_factor(1)-1) + alpha_side*(side_factor(1)-1);
+    w(2) = 1 + alpha_stim*(stim_factor(1)-1) + alpha_side*(side_factor(2)-1);
+    w(3) = 1 + alpha_stim*(stim_factor(2)-1) + alpha_side*(side_factor(1)-1);
+    w(4) = 1 + alpha_stim*(stim_factor(2)-1) + alpha_side*(side_factor(2)-1);
+    % keep weights positive
+    w = max(w, 0.01);
 
     % Safety
     if any(~isfinite(w)) || all(w <= 0)
@@ -412,6 +501,7 @@ function idx_cond = pick_condition_adaptive_bias(cond, TrialRecord, window_n)
 
     % Apply probability floor and renormalize
     prob = apply_probability_floor(prob, prob_floor);
+    prob = apply_probability_ceiling(prob, prob_ceil);
 
     % save the probabilities
     %TrialRecord.User.prob = prob;
@@ -425,6 +515,96 @@ function idx_cond = pick_condition_adaptive_bias(cond, TrialRecord, window_n)
     % Sample condition
     idx_cond = find(rand <= cumsum(prob), 1, 'first');
 
+    if isempty(idx_cond)
+        idx_cond = randi(4);
+    end
+end
+
+
+function [idx_cond, prob] = pick_condition_EMA_adaptive_bias(cond, TrialRecord)
+% EMA-based adaptive bias-correcting condition sampler for 4 conditions:
+% 1 = A-left, 2 = A-right, 3 = B-left, 4 = B-right
+%
+% Uses a continuously-updated exponential moving average of per-condition
+% accuracy (updated one trial at a time) instead of a fixed lookback
+% window, and combines side/stimulus correction additively (not
+% multiplicatively) to avoid over-correcting from a single noisy signal.
+% Probabilities are clamped to [prob_floor, prob_ceil].
+
+    persistent perf_ema
+    if isempty(perf_ema)
+        perf_ema = ones(1,4) * 0.5;   % start neutral at chance
+    end
+
+    lr         = 0.05;   % EMA learning rate (smaller = smoother/slower)
+    alpha_side = 0.8;    % strength of side-bias correction [0,1]
+    alpha_stim = 0.8;    % strength of stimulus-bias correction [0,1]
+    prob_floor = 0.10;
+    prob_ceil  = 0.40;
+    min_valid_trials = 20;  % require some minimal history before correcting
+
+    conditions = TrialRecord.ConditionsPlayed;
+    errors     = TrialRecord.TrialErrors;
+
+    valid_idx = find((errors == 0 | errors == 5) & conditions >= 1 & conditions <= 4);
+
+    if isempty(valid_idx)
+        prob = ones(1,4) / 4;
+        idx_cond = find(rand <= cumsum(prob), 1, 'first');
+        disp(['EMA prob (no data): ' num2str(prob(1),'%.2f') ', ' num2str(prob(2),'%.2f') ', ' ...
+              num2str(prob(3),'%.2f') ', ' num2str(prob(4),'%.2f')])
+        return
+    end
+
+    % Update EMA using only the most recent valid trial
+    last_idx = valid_idx(end);
+    last_cond = conditions(last_idx);
+    last_outcome = (errors(last_idx) == 0);   % 1 if correct, 0 if wrong
+    perf_ema(last_cond) = perf_ema(last_cond) + lr * (last_outcome - perf_ema(last_cond));
+
+    if numel(valid_idx) < min_valid_trials
+        prob = ones(1,4) / 4;
+        idx_cond = find(rand <= cumsum(prob), 1, 'first');
+        disp(['EMA prob (warming up): ' num2str(prob(1),'%.2f') ', ' num2str(prob(2),'%.2f') ', ' ...
+              num2str(prob(3),'%.2f') ', ' num2str(prob(4),'%.2f')])
+        return
+    end
+
+    perf = perf_ema;   % smoothed per-condition accuracy estimate
+
+    % Marginal performance (1=A-left, 2=A-right, 3=B-left, 4=B-right)
+    side_perf = [mean([perf(1), perf(3)]), ... % left
+                 mean([perf(2), perf(4)])];    % right
+    stim_perf = [mean([perf(1), perf(2)]), ... % A
+                 mean([perf(3), perf(4)])];    % B
+
+    side_need = 1 - side_perf;
+    stim_need = 1 - stim_perf;
+
+    side_factor = side_need / mean(side_need);
+    stim_factor = stim_need / mean(stim_need);
+
+    side_factor = 1 + alpha_side * (side_factor - 1);
+    stim_factor = 1 + alpha_stim * (stim_factor - 1);
+
+    % Additive blend (fix for multiplicative over-correction)
+    w = zeros(1,4);
+    w(1) = 1 + (stim_factor(1)-1) + (side_factor(1)-1);
+    w(2) = 1 + (stim_factor(1)-1) + (side_factor(2)-1);
+    w(3) = 1 + (stim_factor(2)-1) + (side_factor(1)-1);
+    w(4) = 1 + (stim_factor(2)-1) + (side_factor(2)-1);
+    w = max(w, 0.01);
+
+    prob = w / sum(w);
+    prob = apply_probability_floor(prob, prob_floor);
+    prob = apply_probability_ceiling(prob, prob_ceil);
+
+    disp(['EMA prob: ' num2str(prob(1),'%.2f') ', ' num2str(prob(2),'%.2f') ', ' ...
+          num2str(prob(3),'%.2f') ', ' num2str(prob(4),'%.2f') ...
+          ' | perf: ' num2str(perf(1),'%.2f') ', ' num2str(perf(2),'%.2f') ', ' ...
+          num2str(perf(3),'%.2f') ', ' num2str(perf(4),'%.2f')])
+
+    idx_cond = find(rand <= cumsum(prob), 1, 'first');
     if isempty(idx_cond)
         idx_cond = randi(4);
     end
@@ -509,12 +689,20 @@ function [idx_cond, prob] = pick_condition_blockwise_adaptive_bias( ...
         stim_factor = 1 + alpha_stim * (stim_factor - 1);
         ind_factor  = 1 + alpha_ind  * (ind_factor  - 1);
 
-        w = zeros(1,4);
+        % w = zeros(1,4);
+        % 
+        % w(1) = stim_factor(1) * side_factor(1) * ind_factor(1);
+        % w(2) = stim_factor(1) * side_factor(2) * ind_factor(2);
+        % w(3) = stim_factor(2) * side_factor(1) * ind_factor(3);
+        % w(4) = stim_factor(2) * side_factor(2) * ind_factor(4);
 
-        w(1) = stim_factor(1) * side_factor(1) * ind_factor(1);
-        w(2) = stim_factor(1) * side_factor(2) * ind_factor(2);
-        w(3) = stim_factor(2) * side_factor(1) * ind_factor(3);
-        w(4) = stim_factor(2) * side_factor(2) * ind_factor(4);
+        w = zeros(1,4);
+        w(1) = 1 + alpha_stim*(stim_factor(1)-1) + alpha_side*(side_factor(1)-1);
+        w(2) = 1 + alpha_stim*(stim_factor(1)-1) + alpha_side*(side_factor(2)-1);
+        w(3) = 1 + alpha_stim*(stim_factor(2)-1) + alpha_side*(side_factor(1)-1);
+        w(4) = 1 + alpha_stim*(stim_factor(2)-1) + alpha_side*(side_factor(2)-1);
+        % keep weights positive
+        w = max(w, 0.01);
 
         if any(~isfinite(w)) || all(w <= 0)
             w = ones(1,4);
@@ -522,6 +710,7 @@ function [idx_cond, prob] = pick_condition_blockwise_adaptive_bias( ...
 
         prob = w / sum(w);
         prob = apply_probability_floor(prob, prob_floor);
+        prob = apply_probability_ceiling(prob, prob_ceil);
 
         % disp(['Updated probabilities after ' ...
         %     num2str(n_valid) ' valid trials: ' ...
@@ -587,6 +776,43 @@ function prob = apply_probability_floor(prob, floor_val)
     end
 
     prob(high) = prob(high) - deficit * (prob(high) / high_sum);
+
+    % Numerical safety
+    prob(prob < 0) = 0;
+    prob = prob / sum(prob);
+end
+
+function prob = apply_probability_ceiling(prob, ceil_val)
+% Enforces a maximum probability for each entry and renormalizes,
+% redistributing the excess to the entries below the ceiling.
+
+    n = numel(prob);
+
+    % If ceiling is impossible (e.g. too low to sum to 1), fall back to uniform
+    if ceil_val * n <= 1
+        prob = ones(1,n) / n;
+        return
+    end
+
+    prob = prob(:)' / sum(prob);
+
+    high = prob > ceil_val;
+    if ~any(high)
+        return
+    end
+
+    excess = sum(prob(high) - ceil_val);
+    prob(high) = ceil_val;
+
+    low = ~high;
+    low_sum = sum(prob(low));
+
+    if low_sum <= 0
+        prob = ones(1,n) / n;
+        return
+    end
+
+    prob(low) = prob(low) + excess * (prob(low) / low_sum);
 
     % Numerical safety
     prob(prob < 0) = 0;
