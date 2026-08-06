@@ -17,6 +17,14 @@ if isempty(staircase_level)
     staircase_total    = 0;
 end
 
+% Parameters for CategoryBlockSwitch
+persistent category_current category_valid_count category_start_applied
+if isempty(category_current)
+    category_current    = 1;   % 1 = conditions [1 2] active, 2 = conditions [3 4] active
+    category_valid_count = 0;
+    category_start_applied = false;
+end
+
 staircase_step       = 10;   % contrast increase per level-up
 staircase_max        = 100;  % max contrast
 staircase_threshold  = 0.8;  % accuracy required to advance
@@ -330,6 +338,53 @@ elseif 0==TrialRecord.TrialErrors(end) || 5==TrialRecord.TrialErrors(end) || 9==
 
         TrialRecord.User.staircase_level = staircase_level;   % for logging/inspection
     
+    elseif strcmp(bias_correction_type, 'CategoryBlockSwitch')
+        disp('-')
+
+        category_block_size = TrialRecord.Editable.category_block_size;
+        % Initialize the start category
+        if ~category_start_applied
+            category_current = TrialRecord.Editable.category_start;
+            category_start_applied = true;
+        end
+
+        % category 1 -> conditions [1 2], category 2 -> conditions [3 4]
+        if category_current == 1
+            active_conds = [1 2];
+        else
+            active_conds = [3 4];
+        end
+
+        % Update counter based on the outcome of the trial just completed,
+        % only if it belonged to the currently active category
+        if ~isempty(TrialRecord.TrialErrors)
+            last_err  = TrialRecord.TrialErrors(end);
+            last_cond = TrialRecord.ConditionsPlayed(end);
+            if (last_err == 0 || last_err == 5) && ismember(last_cond, active_conds)
+                category_valid_count = category_valid_count + 1;
+            end
+        end
+
+        % Switch category once threshold is reached
+        if category_valid_count >= category_block_size
+            category_current = 3 - category_current;  % toggles 1<->2
+            category_valid_count = 0;
+            if category_current == 1
+                active_conds = [1 2];
+            else
+                active_conds = [3 4];
+            end
+            fprintf('CategoryBlockSwitch: switching to conditions [%d %d]\n', active_conds(1), active_conds(2));
+        end
+
+        idx_cond = active_conds(randi(2));
+
+        TrialRecord.NextBlock = cond{idx_cond, 3};
+        TrialRecord.NextCondition = cond{idx_cond,1};
+        TrialRecord.User.cond = cond(idx_cond,1:end);
+
+        TrialRecord.User.category_current = category_current;      % for logging/inspection
+        TrialRecord.User.category_valid_count = category_valid_count;
     end
 
 

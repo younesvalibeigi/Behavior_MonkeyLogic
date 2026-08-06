@@ -1,6 +1,6 @@
 function cond_no = userplot_dms3_4Cond(TrialRecord, MLConfig)
 
-    window_n = 40;
+    window_n = 50;
 
     conditions = TrialRecord.ConditionsPlayed;
     errors = TrialRecord.TrialErrors;

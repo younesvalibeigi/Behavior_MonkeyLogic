@@ -45,6 +45,11 @@ fix_radius = 1.9;
 hold_radius = 2.5;
 choice_radius = 3;
 
+saccade_rotation_deg = 0;
+% Amplitude (in degrees) for random rotation of the target/distractor pair
+% around the fixation point each trial. Each trial randomly uses
+% -saccade_rotation_deg, 0, or +saccade_rotation_deg. Set to 0 to disable.
+
 reward_duration = 180;
 reward_interval = 100;
 reward_schedule_type = 'Probabilistic'; %'Probabilistic' 'ConsecutiveCorrect', 'SideSwitchBonus'
@@ -76,16 +81,21 @@ bias_correction = 'None';
 % 'ProgressiveDistractorContrast': increase the contrast of the distarctor
 % over 100 steps everytime the monkey get that condition right
 
-editable('fix_radius', 'hold_radius', 'choice_radius', ...
+% This is for CategoryBlockSwitch Algorithm
+category_block_size = 50; % number of valid (correct/wrong) trials before switching category
+category_start = 1; % which category to start with: 1 = conditions [1 2], 2 = conditions [3 4]
+
+editable('fix_radius', 'hold_radius', 'choice_radius', 'saccade_rotation_deg', ...
     'familiarization_time', 'sample_time', 'delay_range_ms', 'prechoice_fix_time', 'hold_target_time', ...
     'reward_duration', 'reward_interval', 'reward_schedule_type', 'probabilities_drops', 'reward_dur_afterDelay', ...
     'wrongChoice_delay', 'fixBreak_delay', 'earlySaccade_delay', ...
     'freq_morph0', 'freq_morph1', 'freq_morph2', 'freq_morph3', 'freq_morph4', ...
     'single_vs_double_choice', ...
-    'bias_correction');
+    'bias_correction', 'category_block_size', 'category_start');
 bhv_variable('fix_radius', fix_radius, ...
     'hold_radius', hold_radius, ...
     'choice_radius', choice_radius, ...
+    'saccade_rotation_deg', saccade_rotation_deg, ...
     'familiarization_time', familiarization_time, ... ,
     'sample_time', sample_time, ...
     'delay_time', delay, ...
@@ -99,7 +109,9 @@ bhv_variable('fix_radius', fix_radius, ...
     'wrongChoice_delay', wrongChoice_delay, ...
     'fixBreak_delay', fixBreak_delay, ...
     'earlySaccade_delay', earlySaccade_delay, ...
-    'bias_correction', bias_correction);
+    'bias_correction', bias_correction, ...
+    'category_block_size', category_block_size, ...
+    'category_start', category_start);
 
 
 % Information regarding number of sets, levels, and conditions
@@ -111,6 +123,24 @@ num_conditions_perSet = num_levels*4;
 cond = TrialRecord.User.cond;
 % Conditions = {1:cond_num, 2:frequency, 3:block_num, 4:fix, 5:sample, 6:sample_pos,
     % 7:sample_size, 8:target, 9:target_pos, 10:target_size, 11:distractor, 12:distractor_pos, 13:distractor_size}
+
+% Randomly rotate target/distractor pair around fixation to break motor bias
+if ~TrialRecord.User.initalCond && saccade_rotation_deg > 0
+    rot_choices = [-saccade_rotation_deg, 0, saccade_rotation_deg];
+    theta = rot_choices(randi(3));
+    %theta_rad = deg2rad(theta);
+    fix_pt = cond{4};
+    % disp(['saccade_rotation_deg=' num2str(saccade_rotation_deg,'%.6f') ...
+    %       ' theta=' num2str(theta,'%.6f') ...
+    %       ' fix_pt=' mat2str(fix_pt) ...
+    %       ' target_pre=' mat2str(cond{9}) ...
+    %       ' distractor_pre=' mat2str(cond{12})]);
+    cond{9}  = rotate_position_around_point(cond{9},  fix_pt, theta);
+    cond{12} = rotate_position_around_point(cond{12}, fix_pt, theta);
+    TrialRecord.User.saccade_rotation_used = theta;
+    % disp(['target_post=' mat2str(cond{9}) ' distractor_post=' mat2str(cond{12})]);
+end
+
 if strcmp(MLConfig.FixationPointShape,'Square')
     fixation_point = BoxGraphic(null_);
     fix_size = MLConfig.FixationPointDeg;
@@ -374,3 +404,13 @@ else
     end
 end
 trialerror(error_type);
+
+% the function to rotate the distractor and target relative to the
+% fixation point
+function pos_out = rotate_position_around_point(pos, center, theta_deg)
+    theta_rad = deg2rad(theta_deg); % It cause double conversion
+    dx = pos(1) - center(1);
+    dy = pos(2) - center(2);
+    pos_out = [center(1) + dx*cos(theta_rad) - dy*sin(theta_rad), ...
+               center(2) + dx*sin(theta_rad) + dy*cos(theta_rad)];
+end
