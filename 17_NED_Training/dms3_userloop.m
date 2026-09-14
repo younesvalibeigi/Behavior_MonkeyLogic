@@ -59,13 +59,13 @@ if ~initialized
     %img4 = fullfile(img_dir, sprintf('nat_%03d.png', idx(4)));
 
     % Gratings
-    img1 = fullfile(img_dir2, sprintf('cir0.png'));
-    img2 = fullfile(img_dir2, sprintf('rad0.png'));
+    %img1 = fullfile(img_dir2, sprintf('cir0.png'));
+    %img2 = fullfile(img_dir2, sprintf('rad0.png'));
 
     % Synthetic
-    idx_syn = 95;
-    %img1 = fullfile(img_dir2, sprintf('lei_%03d.png', idx_syn));
-    %img2 = fullfile(img_dir2, sprintf('mei_%03d.png', idx_syn));
+    idx_syn = 2; %95
+    img1 = fullfile(img_dir2, sprintf('lei_%03d.png', idx_syn));
+    img2 = fullfile(img_dir2, sprintf('mei_%03d.png', idx_syn));
     %img1 = fullfile(img_dir3, sprintf('%d_LEI.png', idx_syn));
     %img2 = fullfile(img_dir3, sprintf('%d_MEI.png', idx_syn));
 
@@ -295,6 +295,27 @@ elseif 0==TrialRecord.TrialErrors(end) || 5==TrialRecord.TrialErrors(end) || 9==
         TrialRecord.NextCondition = cond_progressive{idx_cond,1};  % condition number
         TrialRecord.User.cond = cond_progressive(idx_cond,1:end);
     
+    elseif strcmp(bias_correction_type, 'ManualContrast')
+        % Distractor contrast is set directly from the 'manual_contrast_level'
+        % editable (1-100), updated live from the GUI each trial.
+        manual_level = round(TrialRecord.Editable.manual_contrast_level);
+        manual_level = max(1, min(num_contrast_levels, manual_level));  % clamp to valid range
+        fprintf('ManualContrast: level %d\n', manual_level);   % <-- ends the line
+    
+        cond_manual = cond_single;
+        cond_manual{1,11} = prog_img2{manual_level};
+        cond_manual{2,11} = prog_img2{manual_level};
+        cond_manual{3,11} = prog_img1{manual_level};
+        cond_manual{4,11} = prog_img1{manual_level};
+    
+        idx_cond = randi(4);
+    
+        TrialRecord.NextBlock     = cond_manual{idx_cond, 3};
+        TrialRecord.NextCondition = cond_manual{idx_cond,1};
+        TrialRecord.User.cond     = cond_manual(idx_cond,1:end);
+    
+        TrialRecord.User.manual_contrast_level = manual_level;   % for logging/inspection
+    
     elseif strcmp(bias_correction_type, 'StaircaseContrast')
 
         % Update staircase counters based on the outcome of the trial just completed
@@ -400,6 +421,19 @@ else % if the monkey break fixation or fail to choose a choice, repeat previous 
         TrialRecord.NextBlock = cond_progressive{idx_cond, 3};
         TrialRecord.NextCondition = cond_progressive{idx_cond,1};
         TrialRecord.User.cond = cond_progressive(idx_cond,1:end);
+    elseif strcmp(TrialRecord.Editable.bias_correction, 'ManualContrast')
+        manual_level = round(TrialRecord.Editable.manual_contrast_level);
+        manual_level = max(1, min(num_contrast_levels, manual_level));
+    
+        cond_manual = cond_single;
+        cond_manual{1,11} = prog_img2{manual_level};
+        cond_manual{2,11} = prog_img2{manual_level};
+        cond_manual{3,11} = prog_img1{manual_level};
+        cond_manual{4,11} = prog_img1{manual_level};
+    
+        TrialRecord.NextBlock     = cond_manual{idx_cond, 3};
+        TrialRecord.NextCondition = cond_manual{idx_cond,1};
+        TrialRecord.User.cond     = cond_manual(idx_cond,1:end);
     elseif strcmp(TrialRecord.Editable.bias_correction, 'StaircaseContrast')
         cond_staircase = cond_single;
         cond_staircase{1,11} = prog_img2{staircase_level};
