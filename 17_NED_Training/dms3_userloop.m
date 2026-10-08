@@ -36,7 +36,7 @@ img_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMon
 progressive_img_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\progressive_images';
 img_dir2 = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\synthetic_gratings_images';
 img_dir3 = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\synthetic_img_alexnet_relu3_2026-07-11_11-52-23';
-
+img_dir4 = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\synthetic_img_biggan_alexnet_conv3_2026-10-02_17-29-29';
 % The very first call to this userloop function is made before a task
 % starts and it is for retrieving the name(s) of the timing file(s).
 % We will return without determining the trial condition for the first call.
@@ -51,7 +51,7 @@ if isempty(initialized), initialized = false; end
 
 if ~initialized
     idx = randperm(800,2);
-    idx = [315 446];%[164 179];%[372 665];
+    idx = [112 117];%[201 205];%[621 623];%[173 125];%[29 54];%[164 179];%[372 665];
     %img1 = fullfile(img_dir, sprintf('nat_%03d.png', idx(1)));
     %img2 = fullfile(img_dir, sprintf('nat_%03d.png', idx(2)));
     empty = fullfile(img_dir, 'empty.png');
@@ -62,12 +62,18 @@ if ~initialized
     %img1 = fullfile(img_dir2, sprintf('cir0.png'));
     %img2 = fullfile(img_dir2, sprintf('rad0.png'));
 
-    % Synthetic
-    idx_syn = 2; %95
-    img1 = fullfile(img_dir2, sprintf('lei_%03d.png', idx_syn));
-    img2 = fullfile(img_dir2, sprintf('mei_%03d.png', idx_syn));
+    % Synthetic XDream
+    idx_syn = 95;%2; %95
+    %img1 = fullfile(img_dir2, sprintf('lei_%03d.png', idx_syn));
+    %img2 = fullfile(img_dir2, sprintf('mei_%03d.png', idx_syn));
     %img1 = fullfile(img_dir3, sprintf('%d_LEI.png', idx_syn));
     %img2 = fullfile(img_dir3, sprintf('%d_MEI.png', idx_syn));
+
+     % Synthetic BigGan
+    idx_syn = 52;
+    img1 = fullfile(img_dir4, sprintf('%d_LEI.png', idx_syn));
+    img2 = fullfile(img_dir4, sprintf('%d_MEI.png', idx_syn));
+
 
 
 
