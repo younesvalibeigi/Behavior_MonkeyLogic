@@ -63,16 +63,20 @@ if ~initialized
     %img2 = fullfile(img_dir2, sprintf('rad0.png'));
 
     % Synthetic XDream
-    idx_syn = 95;%2; %95
+    idx_syn = 8;%54;%2; %95
     %img1 = fullfile(img_dir2, sprintf('lei_%03d.png', idx_syn));
     %img2 = fullfile(img_dir2, sprintf('mei_%03d.png', idx_syn));
     %img1 = fullfile(img_dir3, sprintf('%d_LEI.png', idx_syn));
     %img2 = fullfile(img_dir3, sprintf('%d_MEI.png', idx_syn));
 
      % Synthetic BigGan
-    idx_syn = 52;
-    img1 = fullfile(img_dir4, sprintf('%d_LEI.png', idx_syn));
-    img2 = fullfile(img_dir4, sprintf('%d_MEI.png', idx_syn));
+    idx_syn = 56;%36;%52;
+    %img1 = fullfile(img_dir4, sprintf('%d_LEI.png', idx_syn));
+    %img2 = fullfile(img_dir4, sprintf('%d_MEI.png', idx_syn));
+
+    morph_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\18_NED_MorphLevels\morphs_48_n7';
+    img1 = fullfile(morph_dir, sprintf('%LEI_0.png', idx_syn));
+    img2 = fullfile(morph_dir, sprintf('%MEI_0.png', idx_syn));
 
 
 
