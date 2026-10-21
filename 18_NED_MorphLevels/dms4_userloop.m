@@ -38,7 +38,7 @@ img_dir2 = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMo
 img_dir3 = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\synthetic_img_alexnet_relu3_2026-07-11_11-52-23';
 img_dir4 = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\synthetic_img_biggan_alexnet_conv3_2026-10-02_17-29-29';
 % Morph levels (dms4): LEI_0..LEI_3 and MEI_3..MEI_0 (7 levels, LEI_3 = MEI_3 = middle)
-morph_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\18_NED_MorphLevels\morph_Arya';
+morph_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\18_NED_MorphLevels\261019_morph_Arya';
 num_morph = 5;%4; % number of LEI (or MEI) images: index 0..3
 % The very first call to this userloop function is made before a task
 % starts and it is for retrieving the name(s) of the timing file(s).
@@ -276,7 +276,7 @@ elseif 0==TrialRecord.TrialErrors(end) || 5==TrialRecord.TrialErrors(end) || 9==
 
 
         % If last trial was not familiarization, update the previous condition level
-        if errors(end) == 9
+        if errors(end) == 9 || isempty(cond_progressive)
             cond_progressive = cond_single;
             
             cond_progressive{1, 11} = prog_img2{prog_level(1)};
@@ -459,7 +459,27 @@ elseif 0==TrialRecord.TrialErrors(end) || 5==TrialRecord.TrialErrors(end) || 9==
             end
             idx_cond = morph_pool(1);
             morph_pool(1) = [];
-
+        elseif strcmp(morph_presentation, 'ManualFrequency')
+            % One frequency per morph condition, read live from the editables.
+            % freq_morphK = [LEI_K-left LEI_K-right MEI_K-left MEI_K-right]
+            % -> conditions 4K+1 .. 4K+4
+            freq_morph = [TrialRecord.Editable.freq_morph0 TrialRecord.Editable.freq_morph1 ...
+                          TrialRecord.Editable.freq_morph2 TrialRecord.Editable.freq_morph3 ...
+                          TrialRecord.Editable.freq_morph4];
+            if numel(freq_morph) < num_cond_morph
+                error('ManualFrequency: %d frequencies given but %d morph conditions exist', ...
+                      numel(freq_morph), num_cond_morph);
+            end
+            freq_morph = freq_morph(1:num_cond_morph);
+            freq_morph(freq_morph < 0) = 0;           % negative values -> never shown
+            if sum(freq_morph) == 0
+                error('ManualFrequency: all frequencies are zero');
+            end
+            prob_morph = freq_morph / sum(freq_morph);
+            idx_cond = find(rand <= cumsum(prob_morph), 1, 'first');
+            if isempty(idx_cond)                      % rounding safety on the last bin
+                idx_cond = find(freq_morph > 0, 1, 'last');
+            end
         else
             error('Unknown morph_presentation: %s', morph_presentation);
         end
@@ -478,6 +498,13 @@ else % if the monkey break fixation or fail to choose a choice, repeat previous 
     %TrialRecord.User.cond = cond_progressive(idx_cond,1:end);
 
     idx_cond = TrialRecord.ConditionsPlayed(end);
+    % Guard: morph_presentation may have been switched to 'None' while the previous
+    % trial was a morph condition (>4), which does not exist in the 4-condition tables
+    if strcmp(TrialRecord.Editable.morph_presentation, 'None') && idx_cond > size(cond,1)
+        new_idx = randi(size(cond,1));
+        fprintf('Previous condition %d not in current table -> picking condition %d\n', idx_cond, new_idx);
+        idx_cond = new_idx;
+    end
 
     if ~strcmp(TrialRecord.Editable.morph_presentation, 'None')
         TrialRecord.NextBlock = cond_morph{idx_cond, 3};
