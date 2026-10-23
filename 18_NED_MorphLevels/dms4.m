@@ -64,7 +64,7 @@ fixBreak_delay = 500;
 earlySaccade_delay = 1500; % Early saccade (Train monkey to think instead of randomly choosing)
 
 % retrive frequencies
-freq_morph0 = [1 1 1 1]; % 1st and 2nd are Most Exciting images, 3rd and 4th are Least Exciting images
+freq_morph0 = [1 1 1 1]; % [LEI_0-left LEI_0-right MEI_0-left MEI_0-right] (conditions 1-4)
 freq_morph1 = [1 1 1 1]; % First morph levels
 freq_morph2 = [1 1 1 1]; % Second morph levels
 freq_morph3 = [1 1 1 1]; % third morph levels
@@ -91,6 +91,7 @@ morph_presentation = 'None';
 % 'None': morph levels are not used; bias_correction chooses the algorithm (as in dms3)
 % 'Random': randomly pick one morph-level condition every trial
 % 'RandomWithoutReplacement': show every morph-level condition once, then refill
+% 'ManualFrequency': pick morph conditions using freq_morph0..freq_morph4
 
 editable('fix_radius', 'hold_radius', 'choice_radius', 'saccade_rotation_deg', ...
     'familiarization_time', 'sample_time', 'delay_range_ms', 'prechoice_fix_time', 'hold_target_time', ...
