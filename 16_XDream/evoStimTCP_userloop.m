@@ -38,8 +38,20 @@ TrialRecord.User.IMGS_PER_COND = IMGS_PER_COND;
 % ===== FR SERVER (client) =====
 fr_server_ip   = '10.68.15.125';
 fr_server_port = 6010;              % matches your server
-fr_chan_exc        = 24;                % electrode index 0..31  (row = fr_chan_exc+1) if choose -1, no channel is chosen
-fr_chan_inh        = -1;                % electrode index 0..31  (row = fr_chan_inh+1)
+NCH            = 96;                % Utah array: A(0-31), B(32-63), C(64-95)
+TrialRecord.User.NCH = NCH;
+
+%fr_chan_exc        = 24;                % electrode index 0..31  (row = fr_chan_exc+1) if choose -1, no channel is chosen
+%fr_chan_inh        = -1;                % electrode index 0..31  (row = fr_chan_inh+1)
+
+% Pick channels by RHX port + channel (0..31). ch = -1 means "no channel".
+% ch can be a vector, e.g. [21 22 23], to average neighbouring channels.
+fr_exc_port = 'A';   fr_exc_ch = 22;
+fr_inh_port = 'A';   fr_inh_ch = -1;
+
+fr_chan_exc = rhx_global_chan(fr_exc_port, fr_exc_ch);   % global 0..95
+fr_chan_inh = rhx_global_chan(fr_inh_port, fr_inh_ch);
+
 
 TrialRecord.User.fr_chan_exc = fr_chan_exc;
 TrialRecord.User.fr_chan_inh = fr_chan_inh;
@@ -233,8 +245,9 @@ if cond_ptr > N_COND
     end
 
     % Sanity checks (rows, columns)
-    if rows ~= 32
-        error('FR rows=%d (expected 32).', rows);
+    if rows ~= NCH %32
+        %error('FR rows=%d (expected 32).', rows);
+        error('FR rows=%d (expected %d).', rows, NCH);
     end
     if numel(err_per_ttl) ~= cols
         error('Mismatch: FR cols=%d but per-TTL error vector has length %d.', cols, numel(err_per_ttl));
@@ -244,7 +257,8 @@ if cond_ptr > N_COND
     keep_mask    = (err_per_ttl == 0);
     %disp('keep_mask')
     %disp(keep_mask)
-    FR_ok        = FR(1:32, keep_mask);           % 32 x (#TTL from successful trials)
+    %FR_ok        = FR(1:32, keep_mask);           % 32 x (#TTL from successful trials)
+    FR_ok        = FR(:, keep_mask);          % NCH x (#TTL from successful trials)
     cond_ok      = cond_idx_per_ttl(keep_mask);   % 1 x (#TTL from successful trials)
 
     % Expectation (complete block): 4 successful trials × 10 TTL each = 40 kept TTLs
@@ -258,40 +272,45 @@ if cond_ptr > N_COND
     % in the order the 10 images were shown for that condition.
     %scores = nan(IMGS_PER_BLOCK, 1);
 
-    % Which FR row to use
-    fr_row_exc = fr_chan_exc + 1;
-    fr_row_inh = fr_chan_inh + 1;
-    % fr_row_exc = max(1, min(32, fr_row_exc)); % make sure it is in the boundry
-
-   % For each condition 1..N_COND, find its TTLs (should be 10) in chronological order
-    % for cond = 1:N_COND
-    %     idx = find(cond_ok == cond);  % TTL indices belonging to this condition
-    %     if isempty(idx)
-    %         % no successful trial for this condition in this block; leave NaNs for now
-    %         continue
-    %     end
-    %     % Use at most IMGS_PER_COND = 10 TTLs (in case of any extra)
-    %     %take = idx(1:min(IMGS_PER_COND, numel(idx)));
-    %     vals = FR_ok(fr_row_exc, idx);
-    % 
-    %     % Fill the slots for this condition (positions are fixed: ((cond-1)*10 + 1 .. +10))
-    %     lin = ((cond-1)*IMGS_PER_COND + (1:numel(idx)));
-    %     scores(lin) = vals(:);
-    %     disp(idx)
+    % % Which FR row to use
+    % fr_row_exc = fr_chan_exc + 1;
+    % fr_row_inh = fr_chan_inh + 1;
+    % % fr_row_exc = max(1, min(32, fr_row_exc)); % make sure it is in the boundry
+    % if fr_row_exc<1 || 32<fr_row_exc
+    %     scores_exc = zeros(size(FR_ok(1, :)));
+    % else
+    %     scores_exc = FR_ok(fr_row_exc, :); % all scores, the first 40 are generated image, the last 20 are control images
+    %     %scores_exc = FR_ok(fr_row_exc, :)+FR_ok(fr_row_exc-1, :)+FR_ok(fr_row_exc+1, :); % all scores, the first 40 are generated image, the last 20 are control images
     % end
-    if fr_row_exc<1 || 32<fr_row_exc
-        scores_exc = zeros(size(FR_ok(1, :)));
-    else
-        scores_exc = FR_ok(fr_row_exc, :); % all scores, the first 40 are generated image, the last 20 are control images
-        %scores_exc = FR_ok(fr_row_exc, :)+FR_ok(fr_row_exc-1, :)+FR_ok(fr_row_exc+1, :); % all scores, the first 40 are generated image, the last 20 are control images
+    % if fr_row_inh<1 || 32<fr_row_inh
+    %     scores_inh = zeros(size(FR_ok(1, :)));
+    % else
+    %     scores_inh = FR_ok(fr_row_inh, :); % all scores, the first 40 are generated image, the last 20 are control images
+    % end
+    % %scores = FR_ok(fr_row_exc, :); % all scores, the first 40 are generated image, the last 20 are control images
+    % scores = scores_exc - scores_inh;
+
+    % Channel indices are 0-based; -1 (or any negative) means "none"
+    fr_rows_exc = fr_chan_exc(fr_chan_exc >= 0) + 1;
+    fr_rows_inh = fr_chan_inh(fr_chan_inh >= 0) + 1;
+    if any(fr_rows_exc > NCH) || any(fr_rows_inh > NCH)
+        error('fr_chan index out of range: must be 0..%d (or -1 for none).', NCH-1);
     end
-    if fr_row_inh<1 || 32<fr_row_inh
-        scores_inh = zeros(size(FR_ok(1, :)));
+    
+    if isempty(fr_rows_exc)
+        scores_exc = zeros(1, size(FR_ok,2));
     else
-        scores_inh = FR_ok(fr_row_inh, :); % all scores, the first 40 are generated image, the last 20 are control images
+        scores_exc = mean(FR_ok(fr_rows_exc, :), 1);   % mean over chosen channels (Hz)
     end
-    %scores = FR_ok(fr_row_exc, :); % all scores, the first 40 are generated image, the last 20 are control images
+    if isempty(fr_rows_inh)
+        scores_inh = zeros(1, size(FR_ok,2));
+    else
+        scores_inh = mean(FR_ok(fr_rows_inh, :), 1);
+    end
     scores = scores_exc - scores_inh;
+
+
+
 
     %scores_ctrl = FR_ok(fr_row_exc, IMGS_PER_BLOCK+1:end); 
 

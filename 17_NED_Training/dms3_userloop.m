@@ -51,9 +51,9 @@ if isempty(initialized), initialized = false; end
 
 if ~initialized
     idx = randperm(800,2);
-    idx = [112 117];%[201 205];%[621 623];%[173 125];%[29 54];%[164 179];%[372 665];
-    %img1 = fullfile(img_dir, sprintf('nat_%03d.png', idx(1)));
-    %img2 = fullfile(img_dir, sprintf('nat_%03d.png', idx(2)));
+    idx = [10 20];%[201 205];%[621 623];%[173 125];%[29 54];%[164 179];%[372 665];
+    img1 = fullfile(img_dir, sprintf('nat_%03d.png', idx(1)));
+    img2 = fullfile(img_dir, sprintf('nat_%03d.png', idx(2)));
     empty = fullfile(img_dir, 'empty.png');
     %img3 = fullfile(img_dir, sprintf('nat_%03d.png', idx(3)));
     %img4 = fullfile(img_dir, sprintf('nat_%03d.png', idx(4)));
@@ -75,8 +75,8 @@ if ~initialized
     %img2 = fullfile(img_dir4, sprintf('%d_MEI.png', idx_syn));
 
     morph_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\18_NED_MorphLevels\morphs_48_n7';
-    img1 = fullfile(morph_dir, sprintf('%LEI_0.png', idx_syn));
-    img2 = fullfile(morph_dir, sprintf('%MEI_0.png', idx_syn));
+    %img1 = fullfile(morph_dir, sprintf('%LEI_0.png', idx_syn));
+    %img2 = fullfile(morph_dir, sprintf('%MEI_0.png', idx_syn));
 
 
 

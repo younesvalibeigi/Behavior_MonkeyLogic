@@ -8,9 +8,10 @@
 % the next free letter (a, b, c, ...) among today's folders.
 clear; clc;
 %% ---------------- Settings ----------------
-N          = 9;    % neuron / image number -> 32_codes.mat
+N          = 46;    % neuron / image number -> 32_codes.mat
 n_levels   = 9;     % number of morph levels (incl. both endpoints)
-codeFolder = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\18_NED_MorphLevels\synthetic_img_biggan_alexnet_conv3_2026-10-15_16-45-57';
+%codeFolder = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\18_NED_MorphLevels\synthetic_img_biggan_alexnet_conv3_2026-10-15_16-45-57';
+codeFolder = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\18_NED_MorphLevels\synthetic_img_biggan_alexnet_conv3_2026-10-16_12-30-14';
 bigganFolder = codeFolder;  % folder containing load_biggan.m / generate_biggan.m (change if elsewhere)
 
 %% ---------------- Output folder: yymmdd_<label>_HHMM_<name> ----------------

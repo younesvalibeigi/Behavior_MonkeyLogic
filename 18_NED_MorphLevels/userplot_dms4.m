@@ -6,7 +6,7 @@ function cond_no = userplot_dms4(TrialRecord, MLConfig)
 % Conditions: 1,2 = LEI_0 | 3,4 = MEI_0 | 5,6 = LEI_1 | 7,8 = MEI_1 | ... | 13,14 = LEI_3 | 15,16 = MEI_3
 % Error bars: binomial standard error sqrt(p(1-p)/n)
 
-    num_morph = 5;%4;   % LEI_0..LEI_3 / MEI_0..MEI_3 (7 morph levels); the last pair is the middle
+    num_morph = 4; %5;%4;   % LEI_0..LEI_3 / MEI_0..MEI_3 (7 morph levels); the last pair is the middle
     conditions = TrialRecord.ConditionsPlayed;
     errors = TrialRecord.TrialErrors;
 
