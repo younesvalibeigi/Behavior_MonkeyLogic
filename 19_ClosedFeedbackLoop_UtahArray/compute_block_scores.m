@@ -7,9 +7,14 @@ function out = compute_block_scores(FR, block_trial_log, fr_chan_exc, fr_chan_in
 %                     TTL (image onset) of the block, in time order.
 %   block_trial_log : struct array, one entry per trial of this block, with
 %                     .cond_idx, .err_code, .had_ttl, .ttl_count
-%   fr_chan_exc     : global 0-based channel(s) 0..NCH-1 to EXCITE (-1 = none)
-%   fr_chan_inh     : global 0-based channel(s) 0..NCH-1 to INHIBIT (-1 = none)
-%   NCH             : number of channels the server should send (96)
+%   fr_chan_exc     : 1-based row indices of excitatory channels in FR
+%                     (e.g., [1 3]; [] = no excitation channels).
+%                     These are NOT global electrode indices.
+%   fr_chan_inh     : 1-based row indices of inhibitory channels in FR
+%                     (e.g., 2; [] = no inhibition channels).
+%                     These are NOT global electrode indices.
+%   NCH             : number of selected channels sent by the server
+%                     (e.g., 3 for A27, B18, B31; not necessarily 96).
 %   N_COND          : conditions per block (5)
 %   IMGS_PER_COND   : images per condition (10)
 %
@@ -17,7 +22,9 @@ function out = compute_block_scores(FR, block_trial_log, fr_chan_exc, fr_chan_in
 %   scores           : 1 x 50, scores_exc - scores_inh  (what CMA-ES maximizes)
 %   scores_exc       : 1 x 50, mean FR over the excitatory channel(s)
 %   scores_inh       : 1 x 50, mean FR over the inhibitory channel(s)
-%   FR_img           : NCH x 50, all channels, column j = image j of the block
+%   FR_img           : NCH x 50, selected channels only.
+%                      Rows follow the server's sorted channel order.
+%                      Column j corresponds to image j of the block.
 %   err_per_ttl, cond_idx_per_ttl, keep_mask : TTL bookkeeping (for checking)
 %
 % HOW THE ALIGNMENT WORKS
@@ -71,11 +78,26 @@ for c = 1:N_COND
 end
 FR_img = FR_ok(:, order);          % NCH x 50, column j = image j
 
-% ---- 4) channel indices: 0-based IDs -> 1-based MATLAB rows ----
-rows_exc = fr_chan_exc(fr_chan_exc >= 0) + 1;   % -1 -> empty (no channel)
-rows_inh = fr_chan_inh(fr_chan_inh >= 0) + 1;
-if any(rows_exc > NCH) || any(rows_inh > NCH)
-    error('compute_block_scores: channel index out of range (must be 0..%d or -1).', NCH-1);
+% % ---- 4) channel indices: 0-based IDs -> 1-based MATLAB rows ----
+% rows_exc = fr_chan_exc(fr_chan_exc >= 0) + 1;   % -1 -> empty (no channel)
+% rows_inh = fr_chan_inh(fr_chan_inh >= 0) + 1;
+% if any(rows_exc > NCH) || any(rows_inh > NCH)
+%     error('compute_block_scores: channel index out of range (must be 0..%d or -1).', NCH-1);
+% end
+
+% ---- 4) Selected channel rows in the received FR matrix ----
+% fr_chan_exc and fr_chan_inh are already 1-based MATLAB row indices.
+% The BigGAN userloop calculates these indices from the selected
+% physical channels after sorting them into the server's A-B-C-D order.
+% Do NOT add 1 or convert from global electrode indices.
+% An empty array [] means no channels selected for that group.
+
+rows_exc = fr_chan_exc;
+rows_inh = fr_chan_inh;
+
+if any(rows_exc < 1 | rows_exc > NCH) || ...
+   any(rows_inh < 1 | rows_inh > NCH)
+    error('compute_block_scores: channel row out of range (must be 1..%d).', NCH);
 end
 
 % ---- 5) scores ----

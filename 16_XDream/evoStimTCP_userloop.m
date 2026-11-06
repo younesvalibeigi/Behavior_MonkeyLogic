@@ -36,9 +36,9 @@ TrialRecord.User.N_COND = N_COND;
 TrialRecord.User.IMGS_PER_COND = IMGS_PER_COND;
 
 % ===== FR SERVER (client) =====
-fr_server_ip   = '10.68.15.125';
+fr_server_ip   = '10.68.14.139';
 fr_server_port = 6010;              % matches your server
-NCH            = 96;                % Utah array: A(0-31), B(32-63), C(64-95)
+NCH            = 32;                % Utah array: A(0-31), B(32-63), C(64-95)
 TrialRecord.User.NCH = NCH;
 
 %fr_chan_exc        = 24;                % electrode index 0..31  (row = fr_chan_exc+1) if choose -1, no channel is chosen
@@ -46,7 +46,7 @@ TrialRecord.User.NCH = NCH;
 
 % Pick channels by RHX port + channel (0..31). ch = -1 means "no channel".
 % ch can be a vector, e.g. [21 22 23], to average neighbouring channels.
-fr_exc_port = 'A';   fr_exc_ch = 22;
+fr_exc_port = 'A';   fr_exc_ch = 12;
 fr_inh_port = 'A';   fr_inh_ch = -1;
 
 fr_chan_exc = rhx_global_chan(fr_exc_port, fr_exc_ch);   % global 0..95

@@ -36,25 +36,52 @@ TrialRecord.User.N_COND = N_COND;
 TrialRecord.User.IMGS_PER_COND = IMGS_PER_COND;
 
 % ===== FR SERVER (client) =====
-fr_server_ip   = '10.68.15.125';
+fr_server_ip   = '10.68.15.194';
 fr_server_port = 6010;              % matches your server
-NCH            = 96;                % Utah array: A(0-31), B(32-63), C(64-95)
+
+% ===== Select channels for closed-loop feedback =====
+fr_chan_exc = {'A27', 'B31'};
+fr_chan_inh = {'B18'};
+
+% Combine selected channels
+fr_selected_ch = [fr_chan_exc, fr_chan_inh];
+
+% Sort channels by port (A, B, C, D), then channel number
+port_num = zeros(1, numel(fr_selected_ch));
+chan_num = zeros(1, numel(fr_selected_ch));
+
+for k = 1:numel(fr_selected_ch)
+    ch = upper(fr_selected_ch{k});
+    port_num(k) = double(ch(1)) - double('A');
+    chan_num(k) = str2double(ch(2:end));
+end
+
+[~, sort_idx] = sortrows([port_num(:), chan_num(:)], [1 2]);
+
+fr_server_ch = fr_selected_ch(sort_idx);
+
+% Find row indices for excitation and inhibition
+fr_rows_exc = find(ismember(fr_server_ch, fr_chan_exc));
+fr_rows_inh = find(ismember(fr_server_ch, fr_chan_inh));
+
+% Number of channels expected from server
+NCH = numel(fr_server_ch);
+
+% Save information
 TrialRecord.User.NCH = NCH;
-
-%fr_chan_exc        = 24;                % electrode index 0..31  (row = fr_chan_exc+1) if choose -1, no channel is chosen
-%fr_chan_inh        = -1;                % electrode index 0..31  (row = fr_chan_inh+1)
-
-% Pick channels by RHX port + channel (0..31). ch = -1 means "no channel".
-% ch can be a vector, e.g. [21 22 23], to average neighbouring channels.
-fr_exc_port = 'A';   fr_exc_ch = 22;
-fr_inh_port = 'A';   fr_inh_ch = -1;
-
-fr_chan_exc = rhx_global_chan(fr_exc_port, fr_exc_ch);   % global 0..95
-fr_chan_inh = rhx_global_chan(fr_inh_port, fr_inh_ch);
-
-
 TrialRecord.User.fr_chan_exc = fr_chan_exc;
 TrialRecord.User.fr_chan_inh = fr_chan_inh;
+TrialRecord.User.fr_server_ch = fr_server_ch;
+
+persistent printChannels
+if isempty(printChannels)
+    fprintf('Expected FR channels (%d): %s\n', ...
+        NCH, strjoin(fr_server_ch, ', '));
+    
+    fprintf('Excitation rows: %s\n', mat2str(fr_rows_exc));
+    fprintf('Inhibition rows: %s\n', mat2str(fr_rows_inh));
+    printChannels = 1;
+end
 
 
 
@@ -290,23 +317,42 @@ if cond_ptr > N_COND
     % %scores = FR_ok(fr_row_exc, :); % all scores, the first 40 are generated image, the last 20 are control images
     % scores = scores_exc - scores_inh;
 
-    % Channel indices are 0-based; -1 (or any negative) means "none"
-    fr_rows_exc = fr_chan_exc(fr_chan_exc >= 0) + 1;
-    fr_rows_inh = fr_chan_inh(fr_chan_inh >= 0) + 1;
-    if any(fr_rows_exc > NCH) || any(fr_rows_inh > NCH)
-        error('fr_chan index out of range: must be 0..%d (or -1 for none).', NCH-1);
+    % % ===== for 96 channels =====
+    % % Channel indices are 0-based; -1 (or any negative) means "none"
+    % fr_rows_exc = fr_chan_exc(fr_chan_exc >= 0) + 1;
+    % fr_rows_inh = fr_chan_inh(fr_chan_inh >= 0) + 1;
+    % if any(fr_rows_exc > NCH) || any(fr_rows_inh > NCH)
+    %     error('fr_chan index out of range: must be 0..%d (or -1 for none).', NCH-1);
+    % end
+    % 
+    % if isempty(fr_rows_exc)
+    %     scores_exc = zeros(1, size(FR_ok,2));
+    % else
+    %     scores_exc = mean(FR_ok(fr_rows_exc, :), 1);   % mean over chosen channels (Hz)
+    % end
+    % if isempty(fr_rows_inh)
+    %     scores_inh = zeros(1, size(FR_ok,2));
+    % else
+    %     scores_inh = mean(FR_ok(fr_rows_inh, :), 1);
+    % end
+    % scores = scores_exc - scores_inh;
+
+
+    % ===== Excitation =====
+    if isempty(fr_rows_exc)
+        scores_exc = zeros(1, size(FR_ok, 2));
+    else
+        scores_exc = mean(FR_ok(fr_rows_exc, :), 1);
     end
     
-    if isempty(fr_rows_exc)
-        scores_exc = zeros(1, size(FR_ok,2));
-    else
-        scores_exc = mean(FR_ok(fr_rows_exc, :), 1);   % mean over chosen channels (Hz)
-    end
+    % ===== Inhibition =====
     if isempty(fr_rows_inh)
-        scores_inh = zeros(1, size(FR_ok,2));
+        scores_inh = zeros(1, size(FR_ok, 2));
     else
         scores_inh = mean(FR_ok(fr_rows_inh, :), 1);
     end
+    
+    % ===== Final score =====
     scores = scores_exc - scores_inh;
 
 

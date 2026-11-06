@@ -73,31 +73,60 @@ N_TOT             = IMGS_PER_BLOCK + NatIMGS_PER_BLOCK;                 % 50
 MAX_BLOCKS        = 50;
 
 % ---- FR server ----
-fr_server_ip   = '10.68.15.125';
+fr_server_ip   = '10.68.14.139';
 fr_server_port = 6010;
-NCH            = 96;      % Utah array: A(0-31), B(32-63), C(64-95)
 FR_PULL_DELAY  = 0.3;     % s. The server only finalizes a TTL once its window
                           % (winEnd 0.205 s + 0.010 s margin) has streamed in.
                           % The last image's window can still be open when the
                           % userloop runs, so wait before asking for the FRs.
 
-% ---- Target channels: RHX port + channel 0..31 (channel -1 = none) ----
-%   score = mean FR(excitatory) - mean FR(inhibitory); CMA-ES MAXIMIZES it.
-%     excite only : fr_exc_ch = 22, fr_inh_ch = -1
-%     inhibit only: fr_exc_ch = -1, fr_inh_ch = 22  (score = -FR -> pushes FR down)
-%     both        : excite one site while suppressing another
-%   Each can be a vector, e.g. [21 22 23], to average neighbouring channels.
-fr_exc_port = 'A';   fr_exc_ch = 24;
-fr_inh_port = 'A';   fr_inh_ch = -1;
-fr_chan_exc = rhx_global_chan(fr_exc_port, fr_exc_ch);   % global 0..95 (-1 = none)
-fr_chan_inh = rhx_global_chan(fr_inh_port, fr_inh_ch);
+% ===== Select channels for closed-loop feedback =====
+fr_chan_exc = {'A27', 'B31'};
+fr_chan_inh = {'B18'};
+
+% Combine selected channels
+fr_selected_ch = [fr_chan_exc, fr_chan_inh];
+
+% Sort channels by port (A, B, C, D), then channel number
+port_num = zeros(1, numel(fr_selected_ch));
+chan_num = zeros(1, numel(fr_selected_ch));
+
+for k = 1:numel(fr_selected_ch)
+    ch = upper(fr_selected_ch{k});
+    port_num(k) = double(ch(1)) - double('A');
+    chan_num(k) = str2double(ch(2:end));
+end
+
+[~, sort_idx] = sortrows([port_num(:), chan_num(:)], [1 2]);
+
+fr_server_ch = fr_selected_ch(sort_idx);
+
+% Find row indices for excitation and inhibition
+fr_rows_exc = find(ismember(fr_server_ch, fr_chan_exc));
+fr_rows_inh = find(ismember(fr_server_ch, fr_chan_inh));
+
+% Number of channels expected from server
+NCH = numel(fr_server_ch);
+
+% Save information
+TrialRecord.User.NCH = NCH;
+TrialRecord.User.fr_chan_exc = fr_chan_exc;
+TrialRecord.User.fr_chan_inh = fr_chan_inh;
+TrialRecord.User.fr_server_ch = fr_server_ch;
+
+persistent printChannels
+if isempty(printChannels)
+    fprintf('Expected FR channels (%d): %s\n', ...
+        NCH, strjoin(fr_server_ch, ', '));
+    
+    fprintf('Excitation rows: %s\n', mat2str(fr_rows_exc));
+    fprintf('Inhibition rows: %s\n', mat2str(fr_rows_inh));
+    printChannels = 1;
+end
 
 % Values read by the timing file / userplot
 TrialRecord.User.N_COND        = N_COND;
 TrialRecord.User.IMGS_PER_COND = IMGS_PER_COND;
-TrialRecord.User.NCH           = NCH;
-TrialRecord.User.fr_chan_exc   = fr_chan_exc;
-TrialRecord.User.fr_chan_inh   = fr_chan_inh;
 
 % Variables written to session_all.mat (after every block and at the end)
 SESSION_VARS = {'codes_all','scores_all','generations','names_all','img_type_all', ...
@@ -207,12 +236,11 @@ if isempty(init_done)
     settings.fr_server_port    = fr_server_port;
     settings.NCH               = NCH;
     settings.FR_PULL_DELAY     = FR_PULL_DELAY;
-    settings.fr_exc_port       = fr_exc_port;
-    settings.fr_exc_ch         = fr_exc_ch;
-    settings.fr_inh_port       = fr_inh_port;
-    settings.fr_inh_ch         = fr_inh_ch;
     settings.fr_chan_exc       = fr_chan_exc;
     settings.fr_chan_inh       = fr_chan_inh;
+    settings.fr_server_ch      = fr_server_ch;
+    settings.fr_rows_exc       = fr_rows_exc;
+    settings.fr_rows_inh       = fr_rows_inh;
     save(fullfile(OUT_DIR, 'settings.mat'), 'settings');
 
     init_done = true;
@@ -268,8 +296,10 @@ if cond_ptr > N_COND
 
     % ---- 2) align TTLs to images and score ----
     try
-        sc = compute_block_scores(FR, block_trial_log, fr_chan_exc, fr_chan_inh, ...
-                                  NCH, N_COND, IMGS_PER_COND);
+        % sc = compute_block_scores(FR, block_trial_log, fr_chan_exc, fr_chan_inh, ...
+        %                           NCH, N_COND, IMGS_PER_COND);
+        sc = compute_block_scores(FR, block_trial_log, fr_rows_exc, fr_rows_inh, ...
+                          NCH, N_COND, IMGS_PER_COND);
     catch ME
         % Save the raw data before stopping, so nothing is lost
         FR_raw = FR; trial_log = block_trial_log; %#ok<NASGU>

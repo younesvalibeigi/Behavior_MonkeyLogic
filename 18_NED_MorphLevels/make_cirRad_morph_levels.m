@@ -11,7 +11,7 @@
 clear; clc;
 
 %% ---------------- Settings ----------------
-n_levels  = 7;      % number of morph levels (incl. both endpoints)
+n_levels  = 9;      % number of morph levels (incl. both endpoints)
 useSlerp  = true;   % true = Slerp (XDream slerp), false = linear blend
 srcFolder = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\15_RFmap_stimShow_DMS_DiffLatency\stimulus';
 leiName   = 'cir0.png';   % LEI = circular
@@ -55,7 +55,10 @@ lei_vec = double(lei_img(:));   % flattened pixels
 mei_vec = double(mei_img(:));
 
 %% ---------------- Morph levels ----------------
-t   = linspace(0, 1, n_levels);    % 0 = LEI (cir), 1 = MEI (rad)
+%t   = linspace(0, 1, n_levels);    % 0 = LEI (cir), 1 = MEI (rad)
+%t = [0, 0.15, 0.30, 0.40, 0.50, 0.60, 0.70, 0.85, 1];
+t = [0, 0.08, 0.18, 0.32, 0.50, 0.68, 0.82, 0.92, 1];
+
 mid = ceil(n_levels/2);            % 5 when n = 9
 levelNames = strings(n_levels, 1); % file name(s) for each level, for the log
 figure('Name', 'cir -> rad morph levels');

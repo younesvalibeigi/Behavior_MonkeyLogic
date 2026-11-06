@@ -107,7 +107,8 @@ for k = 1:nPer
 end
 
 %% ---------------- Noise levels ----------------
-p = linspace(0, 1, nPer);            % noise fraction: 0 = pure stimulus, 1 = full noise
+%p = linspace(0, 1, nPer);            % noise fraction: 0 = pure stimulus, 1 = full noise
+p = [0, 0.25, 0.40, 0.55, 1];
 rows = {};
 figure('Name', 'cir / rad noise levels');
 for s = 1:2

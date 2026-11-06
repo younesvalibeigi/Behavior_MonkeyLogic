@@ -8,10 +8,10 @@
 % the next free letter (a, b, c, ...) among today's folders.
 clear; clc;
 %% ---------------- Settings ----------------
-N          = 46;    % neuron / image number -> 32_codes.mat
+N          = 3;    % neuron / image number -> 32_codes.mat
 n_levels   = 9;     % number of morph levels (incl. both endpoints)
 %codeFolder = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\18_NED_MorphLevels\synthetic_img_biggan_alexnet_conv3_2026-10-15_16-45-57';
-codeFolder = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\18_NED_MorphLevels\synthetic_img_biggan_alexnet_conv3_2026-10-16_12-30-14';
+codeFolder = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\18_NED_MorphLevels\synthetic_img_biggan_alexnet_conv3_2026-11-03_13-24-45';
 bigganFolder = codeFolder;  % folder containing load_biggan.m / generate_biggan.m (change if elsewhere)
 
 %% ---------------- Output folder: yymmdd_<label>_HHMM_<name> ----------------
@@ -48,7 +48,9 @@ mei_code = double(S.mei_code(:)');   % 1x256
 addpath(bigganFolder);
 G = load_biggan();
 %% ---------------- Morph levels ----------------
-t   = linspace(0, 1, n_levels);    % 0 = LEI, 1 = MEI
+%t   = linspace(0, 1, n_levels);    % 0 = LEI, 1 = MEI
+%t = [0, 0.15, 0.30, 0.40, 0.50, 0.60, 0.70, 0.85, 1];
+t = [0, 0.08, 0.18, 0.32, 0.50, 0.68, 0.82, 0.92, 1];
 mid = ceil(n_levels/2);            % 5 when n = 9
 levelNames = strings(n_levels, 1); % file name(s) for each level, for the log
 for k = 1:n_levels
