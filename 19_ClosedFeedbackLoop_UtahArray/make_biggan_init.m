@@ -33,7 +33,8 @@ OUT_FILE    = fullfile(pwd, 'biggan_init_scaled.mat');   % old biggan_init.mat i
 INIT_SEED   = 1;      % fixed seed -> reproducible starting point
 POPSIZE     = 40;     % must equal IMGS_PER_BLOCK in the userloop
 INIT_SIGMA  = 0.4;    % CMA-ES step size (Carlos: 0.4 or 0.7)
-CLASS_SCALE = 0.1;    % class half moves 10x less than noise half (must match the userloop)
+CLASS_STD   = 0.05;   % spread of the starting class embedding (larger = further from the "dog" centre)
+CLASS_SCALE = 0.2;%0.1;    % class half moves 10x less than noise half (must match the userloop)
 Z_MAX       = 2;      % truncation of the noise half (must match the userloop)
 OVERWRITE   = false;  % protects the existing starting point
 PREVIEW     = true;   % render the 40 block-1 images so you can check them
@@ -47,6 +48,13 @@ for f = {'load_biggan.m', 'generate_biggan.m', 'biggan256_initialized_V2.mat'}
 end
 addpath(BIGGAN_DIR);
 
+%% ===== GPU: RTX 5060 Ti (compute capability 12.0) needs CUDA forward compatibility =====
+if USE_GPU
+    parallel.gpu.enableCUDAForwardCompatibility(true);   % must run before any GPU call
+    gdev = gpuDevice;                                    % selects and initialises the GPU
+    fprintf('Using GPU: %s (compute capability %s)\n', gdev.Name, gdev.ComputeCapability);
+end
+
 %% ===== Create the codes (only if the file does not exist yet) =====
 if exist(OUT_FILE, 'file') && ~OVERWRITE
     fprintf('%s already exists: not overwritten (set OVERWRITE = true for a NEW starting point).\n', OUT_FILE);
@@ -57,8 +65,8 @@ if exist(OUT_FILE, 'file') && ~OVERWRITE
 else
     rng(INIT_SEED, 'twister');
 
-    % Mean code in real BigGAN units: noise ~ N(0, 0.7^2), class embedding ~ N(0, 0.05^2)
-    init_z     = [0.7*randn(1,128), 0.05*randn(1,128)];             % 1 x 256
+    % Mean code in real BigGAN units: noise ~ N(0, 0.7^2), class embedding ~ N(0, CLASS_STD^2)
+    init_z     = [0.7*randn(1,128), CLASS_STD*randn(1,128)];        % 1 x 256
     % Same code in optimiser units (class half divided by CLASS_SCALE)
     init_z_opt = [init_z(1:128), init_z(129:256)/CLASS_SCALE];      % 1 x 256
     % First population, in optimiser units, drawn as CMA-ES does at the start
@@ -68,9 +76,10 @@ else
     init_seed  = INIT_SEED;    %#ok<NASGU>
     classScale = CLASS_SCALE;  %#ok<NASGU>
     zMax       = Z_MAX;        %#ok<NASGU>
+    classStd   = CLASS_STD;    %#ok<NASGU>
     created    = datestr(now, 'yyyy-mm-dd HH:MM:SS'); %#ok<NASGU>
     save(OUT_FILE, 'init_z', 'init_z_opt', 'init_codes', 'init_sigma', 'init_seed', ...
-         'classScale', 'zMax', 'created');
+        'classScale', 'zMax', 'classStd', 'created');
     fprintf('Saved fixed starting point to %s\n', OUT_FILE);
 end
 

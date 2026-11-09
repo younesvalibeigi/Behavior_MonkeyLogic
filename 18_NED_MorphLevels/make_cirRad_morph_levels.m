@@ -13,7 +13,7 @@ clear; clc;
 %% ---------------- Settings ----------------
 n_levels  = 9;      % number of morph levels (incl. both endpoints)
 useSlerp  = true;   % true = Slerp (XDream slerp), false = linear blend
-srcFolder = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\15_RFmap_stimShow_DMS_DiffLatency\stimulus';
+srcFolder = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\NIMHMonkeyLogic20x2E4@2.4.2\task\Behavior_MonkeyLogic\15_RFmap_stimShow_DMS_DiffLatency\stimulus';
 leiName   = 'cir0.png';   % LEI = circular
 meiName   = 'rad0.png';   % MEI = radial
 

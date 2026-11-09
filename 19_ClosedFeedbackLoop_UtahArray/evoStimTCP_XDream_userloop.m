@@ -1,4 +1,4 @@
-function [C,timingfile,userdefined_trialholder] = evoStimTCP_userloop(MLConfig,TrialRecord)
+function [C,timingfile,userdefined_trialholder] = evoStimTCP_XDream_userloop(MLConfig,TrialRecord)
 % evoStimTCP_userloop  (FR-driven scoring version)
 % - 4 conditions per block; each trial shows 10 images of that condition.
 % - Scores per block are derived from RHX FR server (32×N matrix), not AlexNet.
@@ -30,7 +30,12 @@ IMGS_PER_BLOCK = 40;                 % 4 conditions × 10 images
 NatIMGS_PER_BLOCK = 10;
 IMGS_PER_COND  = 10;
 N_COND         = IMGS_PER_BLOCK/IMGS_PER_COND + NatIMGS_PER_BLOCK/IMGS_PER_COND;  % 4 + 1 = 5 % 8 + 2 = 10
-MAX_BLOCKS     = 50;
+MAX_BLOCKS     = 70;
+
+
+% Variables written to session_all.mat (after every block and at the end)
+SESSION_VARS = {'codes_all','scores_all','generations','names_all','img_type_all', ...
+    'img_traj','FR_all','sigma_hist','fr_chan_exc','fr_chan_inh'};
 
 TrialRecord.User.N_COND = N_COND;
 TrialRecord.User.IMGS_PER_COND = IMGS_PER_COND;
@@ -40,8 +45,8 @@ fr_server_ip   = '10.68.15.194';
 fr_server_port = 6010;              % matches your server
 
 % ===== Select channels for closed-loop feedback =====
-fr_chan_exc = {'A27', 'B31'};
-fr_chan_inh = {'B18'};
+fr_chan_exc = {'A22'};
+fr_chan_inh = {};
 
 % Combine selected channels
 fr_selected_ch = [fr_chan_exc, fr_chan_inh];
@@ -101,6 +106,7 @@ persistent current_block_idx                % 1..MAX_BLOCKS
 persistent use_names_firstblock             % true if block 1 used S.NAMES
 persistent OUT_DIR OUT_DIR_REL
 persistent codes_all scores_all generations img_traj names_all
+persistent img_type_all FR_all sigma_hist
 persistent nat_names_block_in
 
 % ----- trial-level bookkeeping within CURRENT block -----
@@ -163,6 +169,10 @@ if isempty(init_done)
     generations = [];
     img_traj = cell(MAX_BLOCKS,1);
     names_all = {};
+    img_type_all = [];
+    FR_all     = cell(MAX_BLOCKS, 1);
+    sigma_hist = nan(MAX_BLOCKS, 1);
+    sigma_hist(1) = optim.sigma;
 
     % --- per-block bookkeeping init ---
     block_trial_log = struct('cond_idx', {}, 'err_code', {}, 'had_ttl', {}, 'ttl_count', {});
@@ -173,37 +183,71 @@ if isempty(init_done)
     % representative for block 1
     img_traj{1} = block_repr_image(G, codes_block, block_image_names(1:IMGS_PER_BLOCK));
 
+    settings = struct();
+    settings.generator         = 'FC6 (XDream)';
+    settings.init_sigma        = 3.0;
+    settings.fix               = fix;
+    settings.img_loc           = img_loc;
+    settings.img_size          = img_size;
+    settings.IMGS_PER_BLOCK    = IMGS_PER_BLOCK;
+    settings.NatIMGS_PER_BLOCK = NatIMGS_PER_BLOCK;
+    settings.IMGS_PER_COND     = IMGS_PER_COND;
+    settings.N_COND            = N_COND;
+    settings.MAX_BLOCKS        = MAX_BLOCKS;
+    settings.fr_server_ip      = fr_server_ip;
+    settings.fr_server_port    = fr_server_port;
+    settings.NCH               = NCH;
+    settings.fr_chan_exc       = fr_chan_exc;
+    settings.fr_chan_inh       = fr_chan_inh;
+    settings.fr_server_ch      = fr_server_ch;
+    settings.fr_rows_exc       = fr_rows_exc;
+    settings.fr_rows_inh       = fr_rows_inh;
+    save(fullfile(OUT_DIR, 'settings.mat'), 'settings');
+
+
     init_done = true;
 end
 
+% % ===== EARLY QUIT (user pressed Stop/Q) =====
+% if isfield(TrialRecord,'Quit') && TrialRecord.Quit
+%     % Tell FR server to end (use your same code path; fix var name!)
+%     t_socket = [];
+%     if isempty(t_socket) || ~isvalid(t_socket)
+%         t_socket = tcpclient(fr_server_ip, fr_server_port, "Timeout", 5);
+%         configureTerminator(t_socket, "LF");
+%     end
+%     writeline(t_socket, "End_Task");  % <— was 't' before; use t_socket
+% 
+%     % Save what you have so far
+%     try, save(fullfile(OUT_DIR_REL,'codes_all.mat'),   'codes_all','-v7.3');   end
+%     try, save(fullfile(OUT_DIR_REL,'scores_all.mat'),  'scores_all','-v7.3');  end
+%     try, save(fullfile(OUT_DIR_REL,'generations.mat'), 'generations','-v7.3'); end
+%     try, save(fullfile(OUT_DIR_REL,'img_traj.mat'),    'img_traj','-v7.3');    end
+%     try, save(fullfile(OUT_DIR_REL,'names_all.mat'),   'names_all','-v7.3');   end
+% 
+%     try
+%         figure; montage(img_traj(~cellfun(@isempty,img_traj))); title('Block representatives');
+%         xlabel('Generation'); ylabel('activation');
+%     catch, end
+%     try
+%         figure; scatter(generations, scores_all); xlabel('Generation'); ylabel('FR score'); title('Scores by block');
+%     catch, end
+% 
+%     C = {sprintf('fix(%d,%d)', fix(1), fix(2))};   % graceful end
+%     TrialRecord.NextBlock = -1;  %#ok<NASGU>
+%     TrialRecord.NextCondition = 1; %#ok<NASGU>
+%     return
+% end
+
 % ===== EARLY QUIT (user pressed Stop/Q) =====
-if isfield(TrialRecord,'Quit') && TrialRecord.Quit
-    % Tell FR server to end (use your same code path; fix var name!)
-    t_socket = [];
-    if isempty(t_socket) || ~isvalid(t_socket)
-        t_socket = tcpclient(fr_server_ip, fr_server_port, "Timeout", 5);
-        configureTerminator(t_socket, "LF");
-    end
-    writeline(t_socket, "End_Task");  % <— was 't' before; use t_socket
-
-    % Save what you have so far
-    try, save(fullfile(OUT_DIR_REL,'codes_all.mat'),   'codes_all','-v7.3');   end
-    try, save(fullfile(OUT_DIR_REL,'scores_all.mat'),  'scores_all','-v7.3');  end
-    try, save(fullfile(OUT_DIR_REL,'generations.mat'), 'generations','-v7.3'); end
-    try, save(fullfile(OUT_DIR_REL,'img_traj.mat'),    'img_traj','-v7.3');    end
-    try, save(fullfile(OUT_DIR_REL,'names_all.mat'),   'names_all','-v7.3');   end
-
-    try
-        figure; montage(img_traj(~cellfun(@isempty,img_traj))); title('Block representatives');
-        xlabel('Generation'); ylabel('activation');
-    catch, end
-    try
-        figure; scatter(generations, scores_all); xlabel('Generation'); ylabel('FR score'); title('Scores by block');
-    catch, end
-
-    C = {sprintf('fix(%d,%d)', fix(1), fix(2))};   % graceful end
-    TrialRecord.NextBlock = -1;  %#ok<NASGU>
-    TrialRecord.NextCondition = 1; %#ok<NASGU>
+quit_now = (isprop(TrialRecord,'Quit') || isfield(TrialRecord,'Quit')) && TrialRecord.Quit;
+if quit_now
+    send_FR_end_task(fr_server_ip, fr_server_port);
+    save(fullfile(OUT_DIR, 'session_all.mat'), SESSION_VARS{:});
+    plot_session_summary(img_traj, generations, scores_all, img_type_all, OUT_DIR);
+    C = {sprintf('fix(%d,%d)', fix(1), fix(2))};
+    TrialRecord.NextBlock = -1;
+    TrialRecord.NextCondition = 1;
     return
 end
 
@@ -382,37 +426,70 @@ if cond_ptr > N_COND
     scores_all  = [scores_all; scores(:) scores_exc(:) scores_inh(:)];
     generations = [generations; ones((IMGS_PER_BLOCK+NatIMGS_PER_BLOCK),1)*current_block_idx];
     names_all   = [names_all;  block_image_names(:)];
+    img_type_all = [img_type_all; [zeros(IMGS_PER_BLOCK,1); ones(NatIMGS_PER_BLOCK,1)]];
+    FR_all{current_block_idx} = FR;
+
+    % ---- save everything about this block ----
+    blockData = struct();
+    blockData.block_idx        = current_block_idx;
+    blockData.codes            = codes_block;           % 40 x 4096 FC6 codes
+    blockData.image_names      = block_image_names;     % 50 x 1
+    blockData.scores           = scores;                % 1 x 50 (exc - inh)
+    blockData.scores_exc       = scores_exc;
+    blockData.scores_inh       = scores_inh;
+    blockData.FR_img           = FR_ok;                 % NCH x 50
+    blockData.FR_raw           = FR;                    % NCH x nTTL, as received
+    blockData.err_per_ttl      = err_per_ttl;
+    blockData.cond_idx_per_ttl = cond_idx_per_ttl;
+    blockData.keep_mask        = keep_mask;
+    blockData.trial_log        = block_trial_log;
+    blockData.fr_chan_exc      = fr_chan_exc;
+    blockData.fr_chan_inh      = fr_chan_inh;
+    blockData.sigma            = sigma_hist(current_block_idx);
+    save(fullfile(OUT_DIR, sprintf('blk%03d_data.mat', current_block_idx)), '-struct', 'blockData');
+    save(fullfile(OUT_DIR, 'session_all.mat'), SESSION_VARS{:});
 
     TrialRecord.User.scores_all = scores_all;
     TrialRecord.User.generations = generations;
 
     % --- 5) End experiment? ---
-    if current_block_idx >= MAX_BLOCKS 
 
-        t_socket = [];
-        if isempty(t_socket) || ~isvalid(t_socket)
-            t_socket = tcpclient(fr_server_ip, fr_server_port, "Timeout", 5);
-            configureTerminator(t_socket, "LF");
-            fprintf("Connected to %s:%d\n", fr_server_ip, fr_server_port);
-        end
-        % ask the server to end
-        writeline(t_socket, "End_Task");
-
-        % Save & finish (no next block generation)
-        try, save(fullfile(OUT_DIR_REL,'codes_all.mat'),      'codes_all',      '-v7.3'); end
-        try, save(fullfile(OUT_DIR_REL,'scores_all.mat'),     'scores_all',     '-v7.3'); end
-        try, save(fullfile(OUT_DIR_REL,'generations.mat'),    'generations',    '-v7.3'); end
-        try, save(fullfile(OUT_DIR_REL,'img_traj.mat'),       'img_traj',       '-v7.3'); end
-        try, save(fullfile(OUT_DIR_REL,'names_all.mat'),      'names_all',      '-v7.3'); end
-
-        try
-            figure; montage(img_traj(~cellfun(@isempty,img_traj))); title('Block representatives');
-            xlabel('Generation'); ylabel('activation');
-        catch, end
-        try
-            figure; scatter(generations, scores_all); xlabel('Generation'); ylabel('FR score'); title('Scores by block');
-            legend('scores', 'scores exc', 'scores inh')
-        catch, end
+    % if current_block_idx >= MAX_BLOCKS 
+    % 
+    %     t_socket = [];
+    %     if isempty(t_socket) || ~isvalid(t_socket)
+    %         t_socket = tcpclient(fr_server_ip, fr_server_port, "Timeout", 5);
+    %         configureTerminator(t_socket, "LF");
+    %         fprintf("Connected to %s:%d\n", fr_server_ip, fr_server_port);
+    %     end
+    %     % ask the server to end
+    %     writeline(t_socket, "End_Task");
+    % 
+    %     % Save & finish (no next block generation)
+    %     try, save(fullfile(OUT_DIR_REL,'codes_all.mat'),      'codes_all',      '-v7.3'); end
+    %     try, save(fullfile(OUT_DIR_REL,'scores_all.mat'),     'scores_all',     '-v7.3'); end
+    %     try, save(fullfile(OUT_DIR_REL,'generations.mat'),    'generations',    '-v7.3'); end
+    %     try, save(fullfile(OUT_DIR_REL,'img_traj.mat'),       'img_traj',       '-v7.3'); end
+    %     try, save(fullfile(OUT_DIR_REL,'names_all.mat'),      'names_all',      '-v7.3'); end
+    % 
+    %     try
+    %         figure; montage(img_traj(~cellfun(@isempty,img_traj))); title('Block representatives');
+    %         xlabel('Generation'); ylabel('activation');
+    %     catch, end
+    %     try
+    %         figure; scatter(generations, scores_all); xlabel('Generation'); ylabel('FR score'); title('Scores by block');
+    %         legend('scores', 'scores exc', 'scores inh')
+    %     catch, end
+    % 
+    %     C = {sprintf('fix(%d,%d)', fix(1), fix(2))};   % graceful end
+    %     TrialRecord.NextBlock = -1;  %#ok<NASGU>
+    %     TrialRecord.NextCondition = 1; %#ok<NASGU>
+    %     return
+    % end
+    if current_block_idx >= MAX_BLOCKS
+        save(fullfile(OUT_DIR, 'session_all.mat'), SESSION_VARS{:});
+        send_FR_end_task(fr_server_ip, fr_server_port);
+        plot_session_summary(img_traj, generations, scores_all, img_type_all, OUT_DIR);
 
         C = {sprintf('fix(%d,%d)', fix(1), fix(2))};   % graceful end
         TrialRecord.NextBlock = -1;  %#ok<NASGU>
@@ -431,6 +508,7 @@ if cond_ptr > N_COND
     
     [codes_new, ~, ~] = optim.doScoring(codes_block, scores(1:IMGS_PER_BLOCK), true);
     codes_block = codes_new;
+    sigma_hist(next_block_idx) = optim.sigma;
 
 
 
@@ -446,7 +524,8 @@ if cond_ptr > N_COND
     cond_order = 1:N_COND; %randperm(N_COND);
     cond_ptr   = 1;
 
-    block_trial_log = struct('cond_idx', {}, 'err_code', {}, 'had_ttl', {});
+    %block_trial_log = struct('cond_idx', {}, 'err_code', {}, 'had_ttl', {});
+    block_trial_log = struct('cond_idx', {}, 'err_code', {}, 'had_ttl', {}, 'ttl_count', {});
     ttl_trial_positions = [];
     last_logged_trial_count = numel(TrialRecord.TrialErrors);  % synced up
     last_returned_cond_idx = [];  % will be set below when we output C

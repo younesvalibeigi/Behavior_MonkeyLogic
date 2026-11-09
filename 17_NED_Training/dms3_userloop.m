@@ -32,11 +32,11 @@ staircase_min_trials = 20;   % min trials at current level before advancing
 
 % Pick the folder where your images are saved: <<<<<<<<<<<<<<<<<<<<<<<
 %img_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_Ned_training_1\natural_images';
-img_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\natural_images';
-progressive_img_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\progressive_images';
-img_dir2 = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\synthetic_gratings_images';
-img_dir3 = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\synthetic_img_alexnet_relu3_2026-07-11_11-52-23';
-img_dir4 = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\17_NED_Training\synthetic_img_biggan_alexnet_conv3_2026-10-02_17-29-29';
+img_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\NIMHMonkeyLogic20x2E4@2.4.2\task\Behavior_MonkeyLogic\17_NED_Training\natural_images';
+progressive_img_dir = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\NIMHMonkeyLogic20x2E4@2.4.2\task\Behavior_MonkeyLogic\17_NED_Training\progressive_images';
+img_dir2 = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\NIMHMonkeyLogic20x2E4@2.4.2\task\Behavior_MonkeyLogic\17_NED_Training\synthetic_gratings_images';
+img_dir3 = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\NIMHMonkeyLogic20x2E4@2.4.2\task\Behavior_MonkeyLogic\17_NED_Training\synthetic_img_alexnet_relu3_2026-07-11_11-52-23';
+img_dir4 = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\NIMHMonkeyLogic20x2E4@2.4.2\task\Behavior_MonkeyLogic\17_NED_Training\synthetic_img_biggan_alexnet_conv3_2026-10-02_17-29-29';
 % The very first call to this userloop function is made before a task
 % starts and it is for retrieving the name(s) of the timing file(s).
 % We will return without determining the trial condition for the first call.

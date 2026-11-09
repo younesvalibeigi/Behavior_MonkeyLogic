@@ -8,10 +8,10 @@
 % the next free letter (a, b, c, ...) among today's folders.
 clear; clc;
 %% ---------------- Settings ----------------
-N          = 3;    % neuron / image number -> 32_codes.mat
+N          = 2;    % neuron / image number -> 32_codes.mat
 n_levels   = 9;     % number of morph levels (incl. both endpoints)
 %codeFolder = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\18_NED_MorphLevels\synthetic_img_biggan_alexnet_conv3_2026-10-15_16-45-57';
-codeFolder = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\Apps\NIMHMonkeyLogic22\task\Behavior_MonkeyLogic\18_NED_MorphLevels\synthetic_img_biggan_alexnet_conv3_2026-11-03_13-24-45';
+codeFolder = 'C:\Users\yvalib\AppData\Roaming\MathWorks\MATLAB Add-Ons\NIMHMonkeyLogic20x2E4@2.4.2\task\Behavior_MonkeyLogic\18_NED_MorphLevels\synthetic_img_biggan_robustR50_layer3_0_2026-11-08_15-26-00';
 bigganFolder = codeFolder;  % folder containing load_biggan.m / generate_biggan.m (change if elsewhere)
 
 %% ---------------- Output folder: yymmdd_<label>_HHMM_<name> ----------------
@@ -41,9 +41,16 @@ mkdir(outFolder);
 fprintf('Output folder: %s\n', outFolder);
 
 %% ---------------- Load codes ----------------
-S = load(fullfile(codeFolder, sprintf('%d_codes.mat', N)), 'mei_code', 'lei_code');
-lei_code = double(S.lei_code(:)');   % 1x256 (128 noise + 128 class)
-mei_code = double(S.mei_code(:)');   % 1x256
+S = load(fullfile(codeFolder, sprintf('%d_codes.mat', N)));
+if isfield(S, 'z_MEI')                    % robust ResNet-50 / single-neuron BigGAN scripts
+    mei_code = double(S.z_MEI(:)');
+    lei_code = double(S.z_LEI(:)');
+elseif isfield(S, 'mei_code')             % older BigGAN codes files
+    mei_code = double(S.mei_code(:)');
+    lei_code = double(S.lei_code(:)');
+else
+    error('No MEI/LEI codes found in %d_codes.mat. Variables: %s', N, strjoin(fieldnames(S), ', '));
+end
 %% ---------------- Load BigGAN ----------------
 addpath(bigganFolder);
 G = load_biggan();

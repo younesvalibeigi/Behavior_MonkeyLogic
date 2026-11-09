@@ -1,4 +1,4 @@
-function [C,timingfile,userdefined_trialholder] = evoStimBigGAN_userloop(MLConfig,TrialRecord) %#ok<INUSL>
+function [C,timingfile,userdefined_trialholder] = evoStimTCP_BigGAN_userloop(MLConfig,TrialRecord) %#ok<INUSL>
 % evoStimBigGAN_userloop  Closed-loop image evolution with BigGAN, scored by
 % online firing rates from the RHX FR server (96-channel Utah array).
 %
@@ -55,12 +55,15 @@ end
 BIGGAN_DIR = pwd;   % BigGAN files live in the current (task) folder
 USE_GPU    = true;                  % render on the GPU
 GEN_BATCH  = 40;                    % images per GPU batch (lower it if block 1 gives a GPU memory error)
-INIT_FILE  = 'biggan_init.mat';     % fixed starting point (make_biggan_init.m)
+INIT_FILE   = 'biggan_init_scaled.mat';   % fixed starting point (make_biggan_init.m)
+CLASS_SCALE = 0.2;    % class half moves 5x less than noise half (must match INIT_FILE)
+Z_MAX       = 2;      % truncation of the noise half (must match INIT_FILE)
+toBigGAN = @(c) [max(min(c(:,1:128), Z_MAX), -Z_MAX), CLASS_SCALE*c(:,129:256)];
 NAT_FILE   = 'natural_images.mat';  % natural controls (field NAMES)
 
 % ---- Visual stimulus ----
-fix      = [0 0];
-img_loc  = [-5.0 -1.5];
+fix = [0 3];
+img_loc = [-4+fix(1) -3+fix(2)];
 pxperdeg = 36.039;
 img_size = [9 9]*pxperdeg;
 
@@ -70,10 +73,10 @@ NatIMGS_PER_BLOCK = 10;   % natural control images per block
 IMGS_PER_COND     = 10;   % images per trial (one condition)
 N_COND            = (IMGS_PER_BLOCK + NatIMGS_PER_BLOCK)/IMGS_PER_COND;  % 4 + 1 = 5
 N_TOT             = IMGS_PER_BLOCK + NatIMGS_PER_BLOCK;                 % 50
-MAX_BLOCKS        = 50;
+MAX_BLOCKS        = 10;
 
 % ---- FR server ----
-fr_server_ip   = '10.68.14.139';
+fr_server_ip   = '10.68.15.194';
 fr_server_port = 6010;
 FR_PULL_DELAY  = 0.3;     % s. The server only finalizes a TTL once its window
                           % (winEnd 0.205 s + 0.010 s margin) has streamed in.
@@ -81,7 +84,7 @@ FR_PULL_DELAY  = 0.3;     % s. The server only finalizes a TTL once its window
                           % userloop runs, so wait before asking for the FRs.
 
 % ===== Select channels for closed-loop feedback =====
-fr_chan_exc = {'A27'};
+fr_chan_exc = {'A22'};
 fr_chan_inh = {};
 
 % Combine selected channels
@@ -164,6 +167,11 @@ if isempty(init_done)
 
     % ---- 2) BigGAN ----
     addpath(BIGGAN_DIR);
+    if USE_GPU
+        parallel.gpu.enableCUDAForwardCompatibility(true);   % harmless on R2026b, needed on older releases
+        gdev = gpuDevice;
+        fprintf('[BigGAN] Using GPU: %s (compute capability %s)\n', gdev.Name, gdev.ComputeCapability);
+    end
     G = load_biggan();
     if USE_GPU && ~canUseGPU()
         error('USE_GPU = true, but MATLAB cannot use a GPU on this PC.');
@@ -178,8 +186,11 @@ if isempty(init_done)
         error('%s holds %dx%d codes, but IMGS_PER_BLOCK = %d (needs %dx256).', ...
               INIT_FILE, size(I.init_codes,1), size(I.init_codes,2), IMGS_PER_BLOCK, IMGS_PER_BLOCK);
     end
+    if ~isfield(I, 'classScale') || I.classScale ~= CLASS_SCALE || I.zMax ~= Z_MAX
+        error('%s was made with different classScale/zMax than the userloop settings.', INIT_FILE);
+    end
     copyfile(INIT_FILE, OUT_DIR);                  % keep the starting point with the session
-    optim       = BigGAN_CMAES(I.init_z, I.init_sigma, IMGS_PER_BLOCK);
+    optim       = BigGAN_CMAES(I.init_z_opt, I.init_sigma, IMGS_PER_BLOCK);
     codes_block = double(I.init_codes);
     optim.setPopulation(codes_block);              % block 1 = fixed codes, not a new random draw
 
@@ -189,9 +200,9 @@ if isempty(init_done)
     nat_names_block_in = nat_names_block_in(:);
 
     % ---- 5) render block 1 (also tells you the pause between blocks) ----
-    generate_biggan(G, codes_block(1,:), USE_GPU, 1);   % GPU warm-up: the first call is slow
+    generate_biggan(G, toBigGAN(codes_block(1,:)), USE_GPU, 1);   % GPU warm-up: the first call is slow
     [block_image_names, block_cond_names, t_render] = build_block_images_biggan( ...
-        G, codes_block, OUT_DIR, OUT_DIR_REL, N_COND, IMGS_PER_COND, 1, ...
+        G, toBigGAN(codes_block), OUT_DIR, OUT_DIR_REL, N_COND, IMGS_PER_COND, 1, ...
         nat_names_block_in, USE_GPU, GEN_BATCH);
     fprintf('[BigGAN] Block 1 ready: rendering + saving took %.2f s (about the pause between blocks).\n', t_render);
 
@@ -205,7 +216,7 @@ if isempty(init_done)
     FR_all       = cell(MAX_BLOCKS, 1);
     sigma_hist   = nan(MAX_BLOCKS, 1);
     sigma_hist(1) = optim.sigma;
-    img_traj{1}  = block_repr_image_biggan(G, codes_block, block_image_names(1:IMGS_PER_BLOCK), USE_GPU);
+    img_traj{1}  = block_repr_image_biggan(G, toBigGAN(codes_block), block_image_names(1:IMGS_PER_BLOCK), USE_GPU);
 
     % ---- 7) schedule and trial bookkeeping ----
     cond_order        = 1:N_COND;
@@ -222,6 +233,8 @@ if isempty(init_done)
     settings.GEN_BATCH         = GEN_BATCH;
     settings.INIT_FILE         = INIT_FILE;
     settings.init_sigma        = I.init_sigma;
+    settings.CLASS_SCALE       = CLASS_SCALE;
+    settings.Z_MAX             = Z_MAX;
     settings.NAT_FILE          = NAT_FILE;
     settings.nat_names         = nat_names_block_in;
     settings.fix               = fix;
@@ -313,7 +326,8 @@ if cond_ptr > N_COND
     % ---- 3) save everything about this block ----
     blockData = struct();
     blockData.block_idx        = blk;
-    blockData.codes            = codes_block;           % 40 x 256 (rows = images 1-40)
+    blockData.codes            = toBigGAN(codes_block); % 40 x 256 real BigGAN codes (reproduce the PNGs)
+    blockData.codes_opt        = codes_block;           % 40 x 256 optimiser units (what CMA-ES used)
     blockData.image_names      = block_image_names;     % 50 x 1
     blockData.scores           = sc.scores;             % 1 x 50 (exc - inh)
     blockData.scores_exc       = sc.scores_exc;
@@ -330,7 +344,7 @@ if cond_ptr > N_COND
     save(blk_file, '-struct', 'blockData');
 
     % ---- 4) cumulative logs ----
-    codes_all    = [codes_all;    codes_block];
+    codes_all    = [codes_all;    toBigGAN(codes_block)];
     scores_all   = [scores_all;   [sc.scores(:) sc.scores_exc(:) sc.scores_inh(:)]];
     generations  = [generations;  blk*ones(N_TOT, 1)];
     names_all    = [names_all;    block_image_names(:)];
@@ -366,9 +380,9 @@ if cond_ptr > N_COND
     next_blk    = blk + 1;
     codes_block = optim.ask();                     % 40 x 256 new codes
     [block_image_names, block_cond_names, t_render] = build_block_images_biggan( ...
-        G, codes_block, OUT_DIR, OUT_DIR_REL, N_COND, IMGS_PER_COND, next_blk, ...
+        G, toBigGAN(codes_block), OUT_DIR, OUT_DIR_REL, N_COND, IMGS_PER_COND, next_blk, ...
         nat_names_block_in, USE_GPU, GEN_BATCH);
-    img_traj{next_blk} = block_repr_image_biggan(G, codes_block, block_image_names(1:IMGS_PER_BLOCK), USE_GPU);
+    img_traj{next_blk} = block_repr_image_biggan(G, toBigGAN(codes_block), block_image_names(1:IMGS_PER_BLOCK), USE_GPU);
     fprintf('[Block %d] ready in %.2f s (sigma = %.4f)\n', next_blk, t_render, optim.sigma);
 
     % ---- 8) reset the per-block bookkeeping ----

@@ -40,11 +40,26 @@ choice_radius = 3; %#ok<NASGU>      % not used here, kept for consistency
 ttl_port     = 1;                    % Port 1 in I/O menu
 ttl_duration = frameLength;                   % 16.6667 ms pulse at each image onset
 
+
+% ---- Reward (editable from the MonkeyLogic menu) ----
+reward_duration      = 100;    % ms per drop
+reward_interval      = 200;   % ms between drops
+reward_schedule_type = 'Probabilistic';   % 'Probabilistic' or 'ConsecutiveCorrect'
+numbers_drops        = [0, 1, 2, 3, 4, 5];
+probabilities_drops  = [0.01, 0.70, 0.19, 0.05, 0.04, 0.01];   % same length as numbers_drops
+
+editable('reward_duration', 'reward_interval', 'reward_schedule_type', 'probabilities_drops');
+
 N = TrialRecord.User.IMGS_PER_COND; %10;
 fr_chan_exc = TrialRecord.User.fr_chan_exc;
 fr_chan_inh = TrialRecord.User.fr_chan_inh;
 % Expose a couple variables to BHV for logging
-bhv_variable('stim_time',stim_time,'delay_time',delay_time,'ttl_port',ttl_port,'ttl_duration',ttl_duration, 'Num_imgs', N, 'fr_chan_exc',fr_chan_exc,'fr_chan_inh',fr_chan_inh);
+%bhv_variable('stim_time',stim_time,'delay_time',delay_time,'ttl_port',ttl_port,'ttl_duration',ttl_duration, 'Num_imgs', N, 'fr_chan_exc',fr_chan_exc,'fr_chan_inh',fr_chan_inh);
+bhv_variable('stim_time',stim_time,'delay_time',delay_time,'ttl_port',ttl_port,'ttl_duration',ttl_duration, ...
+    'Num_imgs', N, 'fr_chan_exc',fr_chan_exc,'fr_chan_inh',fr_chan_inh, ...
+    'reward_duration',reward_duration,'reward_interval',reward_interval, ...
+    'reward_schedule_type',reward_schedule_type,'probabilities_drops',probabilities_drops);
+
 
 % ===================== SCENES =====================
 
@@ -137,17 +152,42 @@ TrialRecord.User.num_TTL = num_TTL;
 
 % Reward & end
 idle(0);  % clear screen
+% if 0==error_type
+%     numbers = [0, 1, 2, 3, 4, 5];
+%     probabilities = [0.01, 0.70, 0.19, 0.05 0.04, 0.01];
+%     % Sample a number based on the specified probabilities
+%     num_juice = randsample(numbers, 1, true, probabilities);
+%     pauseTime = frameLength*12; %% 200
+%     goodmonkey(75, 'juiceline',1, 'numreward',num_juice, 'pausetime',pauseTime, 'eventmarker',reward_eventmaker);
+% 
+%     %goodmonkey(60, 'juiceline',1, 'numreward',1, 'pausetime',200, 'eventmarker',reward_eventmaker);
+% % else
+% %     idle(frameLength);
+% end
 if 0==error_type
-    numbers = [0, 1, 2, 3, 4, 5];
-    probabilities = [0.01, 0.70, 0.19, 0.05 0.04, 0.01];
-    % Sample a number based on the specified probabilities
-    num_juice = randsample(numbers, 1, true, probabilities);
-    pauseTime = frameLength*12; %% 200
-    goodmonkey(75, 'juiceline',1, 'numreward',num_juice, 'pausetime',pauseTime, 'eventmarker',reward_eventmaker);
+    if strcmp(reward_schedule_type, 'Probabilistic')
+        num_juice = randsample(numbers_drops, 1, true, probabilities_drops);
 
-    %goodmonkey(60, 'juiceline',1, 'numreward',1, 'pausetime',200, 'eventmarker',reward_eventmaker);
-% else
-%     idle(frameLength);
+    elseif strcmp(reward_schedule_type, 'ConsecutiveCorrect')
+        % count this trial (correct) plus the correct trials just before it
+        recent_errors = [TrialRecord.TrialErrors 0];
+        last_error = find(recent_errors ~= 0, 1, 'last');
+        consecutive_correct = length(recent_errors) - max([last_error 0]);
+        if consecutive_correct >= 4
+            num_juice = 3;
+        elseif consecutive_correct >= 3
+            num_juice = 2;
+        else
+            num_juice = 1;
+        end
+
+    else
+        error('Unknown reward_schedule_type: %s', reward_schedule_type);
+    end
+
+    goodmonkey(reward_duration, 'juiceline',1, 'numreward',num_juice, ...
+        'pausetime',reward_interval, 'eventmarker',reward_eventmaker);
+    bhv_variable('num_juice', num_juice);
 end
 
 trialerror(error_type);
