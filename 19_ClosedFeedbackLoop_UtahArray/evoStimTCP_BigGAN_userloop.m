@@ -81,8 +81,8 @@ FR_PULL_DELAY  = 0.3;     % s. The server only finalizes a TTL once its window
                           % userloop runs, so wait before asking for the FRs.
 
 % ===== Select channels for closed-loop feedback =====
-fr_chan_exc = {'A27', 'B31'};
-fr_chan_inh = {'B18'};
+fr_chan_exc = {'A27'};
+fr_chan_inh = {};
 
 % Combine selected channels
 fr_selected_ch = [fr_chan_exc, fr_chan_inh];
